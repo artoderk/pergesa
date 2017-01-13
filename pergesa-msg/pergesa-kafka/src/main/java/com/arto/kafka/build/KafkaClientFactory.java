@@ -83,8 +83,7 @@ public class KafkaClientFactory implements MqFactory {
                     if (consumerMap.containsKey(config.getDestination())) {
                         return consumerMap.get(config.getDestination());
                     } else {
-                        // 生成一个新的消费者
-                        // TODO
+                        // TODO 生成一个新的消费者
                         consumerMap.put(config.getDestination(), null);
                         log.info("Binding kafka consumer on config : " + config);
                         return null;

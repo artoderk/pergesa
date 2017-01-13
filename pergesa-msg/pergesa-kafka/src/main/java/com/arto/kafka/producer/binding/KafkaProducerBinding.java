@@ -1,53 +1,111 @@
 package com.arto.kafka.producer.binding;
 
 import com.alibaba.fastjson.JSON;
-import com.arto.core.common.Constants;
+import com.arto.core.common.MessageRecord;
+import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.arto.event.build.EventBusFactory;
+import com.arto.event.service.PersistentEventService;
+import com.arto.event.util.SpringContextHolder;
+import com.arto.kafka.common.Constants;
+import com.arto.kafka.common.KMessageRecord;
 import com.arto.kafka.event.KafkaEvent;
-import lombok.RequiredArgsConstructor;
 
 /**
+ * 生产者绑定类，一个对象对应一个Topic和一份配置
+ *
  * Created by xiong.j on 2017/1/12.
  */
-@RequiredArgsConstructor
 public class KafkaProducerBinding implements MqProducer {
 
+    /** Kafka生产者配置 */
     private final KafkaProducerConfig config;
+
+    /** 持久化事件服务 */
+    private PersistentEventService service;
+
+    public KafkaProducerBinding(KafkaProducerConfig config) {
+        verifyEvent(config);
+        this.config = config;
+        // 暂时依赖Spring获取
+        this.service = SpringContextHolder.getBean(PersistentEventService.class);
+    }
 
     @Override
     public void send(Object message) throws Exception {
-        KafkaEvent event = buildEvent(null, -1, message);
-
-        EventBusFactory.getInstance().post(event);
+        innerSend(buildMessage(null, -1, message));
     }
 
     @Override
     public void send(String key, Object message) throws Exception {
-        KafkaEvent event = buildEvent(key, -1, message);
+        innerSend(buildMessage(key, -1, message));
     }
 
     @Override
     public void send(String key, int partition, Object message) throws Exception {
-        KafkaEvent event = buildEvent(key, partition, message);
+        innerSend(buildMessage(key, partition, message));
     }
 
-    private KafkaEvent buildEvent(String key, int partition, Object message){
-        KafkaEvent event = new KafkaEvent();
-        // 对应Topic
-        event.setDestination(config.getDestination());
-        // 对应Acks
-        event.setPriority(config.getPriority());
-        // 事件分组
-        event.setGroup(Constants.MQ);
+    @Override
+    public void send(MessageRecord record) throws Exception {
+        if (record instanceof KMessageRecord) {
+            innerSend((KMessageRecord)record);
+        } else {
+            throw new MqClientException("Not support this messageRecord:" + record);
+        }
+    }
+
+    private void innerSend(KMessageRecord record) throws Exception {
+        // 转换为事件
+        KafkaEvent event = buildEvent(record);
+        if (event.isPersistent()) {
+            // 持久化消息直接持久化(模拟客户端两阶段提交)
+            service.persist(event, Constants.KAFKA_EVENT_BEAN);
+        } else {
+            // 非持久化消息直接发送
+            EventBusFactory.getInstance().post(event);
+        }
+    }
+
+    private KMessageRecord buildMessage(String key, int partition, Object message){
+        KMessageRecord record = new KMessageRecord();
         // Hash主键
-        event.setKey(key);
+        record.setKey(key);
         // 分区
-        event.setPartition(partition);
+        record.setPartition(partition);
+        // 消息
+        record.setMessage(message);
+        return record;
+    }
+
+    private KafkaEvent buildEvent(KMessageRecord record){
+        KafkaEvent event = new KafkaEvent();
+        // 事件分组
+        event.setGroup(com.arto.core.common.Constants.MQ);
+        // 业务流水号
+        event.setBusinessId(record.getBusinessId());
+        // 业务类型
+        event.setBusinessType(record.getBusinessType());
+        // Topic
+        event.setDestination(config.getDestination());
+        // Hash主键
+        event.setKey(record.getKey());
+        // 分区
+        event.setPartition(record.getPartition());
+        // 优先级
+        event.setPriority(config.getPriority());
+        // 持久化
+        event.setPersistent(record.isTransaction());
+        // 消息 使用fastjson序列化
+        event.setPayload(JSON.toJSONString(record.getMessage()));
         // 回调
         event.setCallback(config.getCallback());
-        // 消息 使用fastjson序列化
-        event.setPayload(JSON.toJSONString(message));
         return event;
+    }
+
+    private void verifyEvent(KafkaProducerConfig config){
+        if ((config.getPriority() == 1 || config.getPriority() == 2) && config.getCallback() != null) {
+            throw new MqClientException("Important messages can't send by asynchronous! ProducerConfig:" + config);
+        }
     }
 }

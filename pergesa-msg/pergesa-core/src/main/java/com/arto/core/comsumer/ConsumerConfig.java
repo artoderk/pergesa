@@ -1,6 +1,6 @@
 package com.arto.core.comsumer;
 
-import com.arto.core.producer.ICallback;
+import com.arto.core.producer.MqCallback;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -23,7 +23,7 @@ public class ConsumerConfig {
     private int priority = 1;
 
     /** 发送完成后的回调 */
-    private ICallback callback;
+    private MqCallback callback;
 
     /** 是否启用消息二阶段提交，启用后确保DB和消息中间件的原子性, 目前采用客户端模拟方案 */
     private boolean isTransaction;

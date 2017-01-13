@@ -13,6 +13,7 @@ import lombok.ToString;
 @ToString
 public class EventContext {
 
+    /** 持久化消息DB对象 */
     private EventInfo eventInfo;
 
     public EventContext(){}

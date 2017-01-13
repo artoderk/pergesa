@@ -1,5 +1,6 @@
 package com.arto.event.service;
 
+import com.arto.event.build.Event;
 import com.arto.event.common.EventStatusEnum;
 import com.arto.event.domain.EventInfo;
 import com.arto.event.exception.PersistentEventLockException;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.Random;
 
 /**
  * Created by xiong.j on 2017/1/4.
@@ -27,15 +29,45 @@ public class PersistentEventServiceImpl implements PersistentEventService {
     @Value("${event.persistent.lock.optimistic}")
     private boolean lockOptimistic = false;
 
+    /** 系统名 */
+    @Value("${sar.name}")
+    private String systemId = "webapp";
+
+    /** 事件分片数 */
+    @Value("${event.storage.tag}")
+    private int tag = 10;
+
+    /** 默认重试次数 */
+    @Value("${event.retry.times}")
+    private int defaultRetry = 5;
+
+    /** 事件持久化操作 */
     @Autowired
     private EventStorage eventStorage;
+
+    /** 随机数生成器，用来分隔Tag*/
+    private Random random = new Random();
+
+    /**
+     * 持久化Event
+     *
+     * @param event
+     * @param type
+     * @throws
+     */
+    @Override
+    public void persist(Event event, String type) throws Exception {
+        eventStorage.create(event2Info(event, type));
+    }
 
     /**
      * 对持久化Event加锁
      *
      * @param eventInfo
      * @return
+     * @throws
      */
+    @Override
     public EventInfo lock(EventInfo eventInfo) throws Exception {
         if (lockOptimistic) {
             // 乐观锁直接返回
@@ -47,8 +79,10 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             } catch (Exception e){
                 if (e.getMessage().contains("ORA-00054")
                         || e.getMessage().contains("could not obtain lock")) {
+                    // Oracle和Postgresql环境下获取锁失败Exception
                     throw new PersistentEventLockException(e);
                 }
+                // 其它Exception
                 throw e;
             }
         }
@@ -69,7 +103,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             // TODO 超过重试次数的Event通过MQ发送到后管系统
             // EventBusFactory.getInstance().post();
 
-            // 更新处理状态为 3:等待人工处理
+            // 更新处理状态为 "3:等待人工处理"
             EventInfo updInfo = new EventInfo();
             updInfo.setId(eventInfo.getId());
             updInfo.setStatus(EventStatusEnum.MANUAL_WAIT.getCode());
@@ -87,7 +121,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
      */
     @Override
     public void finish(EventInfo eventInfo){
-        // 更新处理状态为 2:处理成功
+        // 更新处理状态为 "2:处理成功"
         EventInfo updInfo = new EventInfo();
         updInfo.setId(eventInfo.getId());
         updInfo.setStatus(EventStatusEnum.SUCCESS.getCode());
@@ -98,7 +132,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         EventInfo updInfo = new EventInfo();
         updInfo.setId(eventInfo.getId());
         if (eventInfo.getStatus() == EventStatusEnum.WAIT.getCode()) {
-            // 更新状态为"处理中"
+            // 更新状态为 "1:处理中"
             updInfo.setStatus(EventStatusEnum.PROCESSING.getCode());
         }
 
@@ -115,16 +149,42 @@ public class PersistentEventServiceImpl implements PersistentEventService {
 
     private void update(EventInfo updInfo) {
         if (lockOptimistic) {
+            // 采用乐观锁时更新操作
             eventStorage.optimisticUpdate(updInfo);
         } else {
+            // 采用悲观锁或其它情况下的更新操作
             eventStorage.update(updInfo);
         }
     }
 
     private Timestamp getNextRetryTime(int currentRetriedCount){
+        // 获取下一次重试时间，默认使用重试次数的9次方
         return new Timestamp(System.currentTimeMillis()
                 + Math.round(Math.pow(9, currentRetriedCount))
                 * 1000);
     }
 
+    private EventInfo event2Info(Event event, String type){
+        EventInfo info = new EventInfo();
+        // Tag
+        info.setTag(random.nextInt(10));
+        // 系统名
+        info.setSystemId(systemId);
+        // 业务流水号
+        info.setBusinessId(event.getBusinessId());
+        // 业务类型
+        info.setBusinessType(event.getBusinessType());
+        // 事件类型
+        info.setEventType(type);
+        // 事件内容
+        info.setPayload(event.getPayload());
+        // 重试次数
+        if (event.isPersistent() && event.getRetry() == 0) {
+            // 持久化事件且没有设定重试次数的情况下，使用默认次数
+            info.setDefaultRetriedCount(defaultRetry);
+        } else {
+            info.setDefaultRetriedCount(event.getRetry());
+        }
+        return info;
+    }
 }

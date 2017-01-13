@@ -14,10 +14,6 @@ import java.sql.Timestamp;
 @ToString
 public class EventInfo {
 
-    /* --------------------- */
-    private String group;
-    /* --------------------- */
-
     private long id = -1L;
 
     private int tag = -1;

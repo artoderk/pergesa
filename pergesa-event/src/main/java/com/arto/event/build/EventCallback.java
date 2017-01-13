@@ -10,5 +10,5 @@ public interface EventCallback {
      *
      * @param event
      */
-    public void onCompletion(Event event);
+    void onCompletion(Event event);
 }

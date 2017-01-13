@@ -28,6 +28,7 @@ public class EventRecoveryServiceImpl implements EventRecoveryService {
     @Value("${event.start.day}")
     private int day = 7;
 
+    /** 系统名 */
     @Value("${sar.name}")
     private String systemId = "";
 

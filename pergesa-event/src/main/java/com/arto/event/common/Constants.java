@@ -7,22 +7,11 @@ import java.text.SimpleDateFormat;
  */
 public interface Constants {
 
-    String MQ = "mq";
-
-    String KAFKA = "kafka";
-
-    String ACTIVEMQ = "activemq";
-
-    // TODO
-    String KAFKA_EVENT_BEAN = "com.arto.event.KafkaEvent";
-
-    String ACTIVEMQ_EVENT_BEAN = "";
-
     String ORACLE = "oracle";
 
     String POSTGRESQL = "postgresql";
 
-    String DEFAULT_SYSTEM_ID = "webapplication";
+    String DEFAULT_SYSTEM_ID = "webapp";
 
     /** 主键重复 */
     String KEY_23505 = "23505";

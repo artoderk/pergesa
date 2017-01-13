@@ -1,8 +1,8 @@
 package com.arto.kafka.listener;
 
 import com.arto.event.build.EventListener;
-import com.arto.event.common.Constants;
 import com.arto.event.service.EventAdviceService;
+import com.arto.kafka.common.Constants;
 import com.arto.kafka.event.KafkaEvent;
 import com.arto.kafka.producer.KafkaMessageProducer;
 import org.springframework.beans.factory.annotation.Autowired;

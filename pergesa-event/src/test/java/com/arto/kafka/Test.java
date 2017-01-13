@@ -9,7 +9,6 @@ import java.util.Date;
 public class Test {
 
     public Date getNextRetryTime(int defaultRetriedCount, int currentRetriedCount){
-        // TODO 重试次数间隔
         return new Date(System.currentTimeMillis()
                 + Math.round(Math.pow(9, defaultRetriedCount - currentRetriedCount))
                 * 1000);
