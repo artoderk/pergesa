@@ -1,6 +1,6 @@
 package com.arto.event.build;
 
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

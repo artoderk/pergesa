@@ -1,7 +1,7 @@
 package com.arto.event.service;
 
 import com.arto.event.build.Event;
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 
 /**
  * Created by xiong.j on 2017/1/4.

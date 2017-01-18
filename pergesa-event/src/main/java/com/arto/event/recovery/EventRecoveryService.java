@@ -1,6 +1,6 @@
 package com.arto.event.recovery;
 
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 
 import java.util.List;
 

@@ -1,7 +1,5 @@
 package com.arto.event.storage;
 
-import com.arto.event.domain.EventInfo;
-
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;

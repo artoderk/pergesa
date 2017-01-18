@@ -17,29 +17,29 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class KafkaMessageProducerFactory {
 
-    @Value("${kafka.servers}")
-    private String servers = "172.18.2.192:9092";
+    @Value("${kafka.servers:172.18.2.192:9092}")
+    private String servers;
 
-    @Value("${kafka.client.id}")
-    private String client = "pergesa-msg";
+    @Value("${kafka.client.id:pergesa-msg}")
+    private String client;
 
-    @Value("${kafka.retries}")
-    private int retries = 3;
+    @Value("${kafka.retries:3}")
+    private int retries;
 
-    @Value("${kafka.batch.size}")
-    private int batchSize = 16384;
+    @Value("${kafka.batch.size:16384}")
+    private int batchSize;
 
-    @Value("${kafka.linger.ms}")
-    private int lingerMs = 1;
+    @Value("${kafka.linger.ms:1}")
+    private int lingerMs;
 
-    @Value("${kafka.buffer.memory}")
-    private int bufferMemory = 33554432;
+    @Value("${kafka.buffer.memory:33554432}")
+    private int bufferMemory;
 
-    @Value("${kafka.key.serializer}")
-    private String keySerializer = "org.apache.kafka.common.serialization.StringSerializer";
+    @Value("${kafka.key.serializer:org.apache.kafka.common.serialization.StringSerializer}")
+    private String keySerializer;
 
-    @Value("${kafka.value.serializer}")
-    private String valueSerializer = "org.apache.kafka.common.serialization.StringSerializer";
+    @Value("${kafka.value.serializer:org.apache.kafka.common.serialization.StringSerializer}")
+    private String valueSerializer;
 
     private Map<Integer, KafkaProducer<String, String>> producerMap = new ConcurrentHashMap<Integer, KafkaProducer<String, String>>(3);
 
@@ -85,7 +85,7 @@ public class KafkaMessageProducerFactory {
         for(Map.Entry<Integer, KafkaProducer<String, String>> entry : producerMap.entrySet()){
             entry.getValue().close();
         }
-        log.info("Destroy kafka producer successful. : ");
+        log.info("Destroy kafka producer successful.");
     }
 
     /**

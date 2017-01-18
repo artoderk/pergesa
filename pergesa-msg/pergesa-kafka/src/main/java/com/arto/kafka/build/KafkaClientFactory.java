@@ -8,9 +8,11 @@ import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.arto.core.producer.ProducerConfig;
 import com.arto.kafka.common.Constants;
+import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.producer.binding.KafkaProducerBinding;
 import com.arto.kafka.producer.binding.KafkaProducerConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -21,6 +23,7 @@ import java.util.concurrent.ConcurrentMap;
  * Created by xiong.j on 2017/1/12.
  */
 @Slf4j
+@Component
 public class KafkaClientFactory implements MqFactory {
 
     private static final KafkaClientFactory instance = new KafkaClientFactory();

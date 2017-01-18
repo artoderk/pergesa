@@ -9,6 +9,7 @@ import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.common.KMessageRecord;
+import com.arto.kafka.common.KAcksEnum;
 import com.arto.kafka.event.KafkaEvent;
 
 /**
@@ -27,8 +28,10 @@ public class KafkaProducerBinding implements MqProducer {
     public KafkaProducerBinding(KafkaProducerConfig config) {
         verifyEvent(config);
         this.config = config;
+        // 优先级转换为Kafka的acks
+        this.config.setPriority(convert2Ack(config));
         // 暂时依赖Spring获取
-        this.service = SpringContextHolder.getBean(PersistentEventService.class);
+        this.service = SpringContextHolder.getBean("persistentEventService");
     }
 
     @Override
@@ -75,6 +78,8 @@ public class KafkaProducerBinding implements MqProducer {
         record.setPartition(partition);
         // 消息
         record.setMessage(message);
+        // 事务
+        record.setTransaction(config.isTransaction());
         return record;
     }
 
@@ -97,13 +102,30 @@ public class KafkaProducerBinding implements MqProducer {
         // 持久化
         event.setPersistent(record.isTransaction());
         // 消息 使用fastjson序列化
-        event.setPayload(JSON.toJSONString(record.getMessage()));
+        event.setPayload(JSON.toJSONString(record));
         // 回调
         event.setCallback(config.getCallback());
         return event;
     }
 
+    private int convert2Ack(KafkaProducerConfig config){
+        if (config.getPriority() == 3) {
+            return KAcksEnum.ACK_NOWAIT.getCode();
+        } else if (config.getPriority() == 0 ){
+            return KAcksEnum.ACK_NOWAIT.getCode();
+        } else if (config.getPriority() == 1){
+            return KAcksEnum.ACK_ALL.getCode();
+        } else if (config.getPriority() == 2){
+            return KAcksEnum.ACK_LEADER.getCode();
+        } else {
+            return KAcksEnum.ACK_ALL.getCode();
+        }
+    }
+
     private void verifyEvent(KafkaProducerConfig config){
+        if (config.getPriority() > 3 || config.getPriority() < -1) {
+            throw new MqClientException("Not support this priority! ProducerConfig:" + config);
+        }
         if ((config.getPriority() == 1 || config.getPriority() == 2) && config.getCallback() != null) {
             throw new MqClientException("Important messages can't send by asynchronous! ProducerConfig:" + config);
         }

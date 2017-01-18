@@ -7,7 +7,7 @@ import com.arto.event.build.EventCallback;
 /**
  * Created by xiong.j on 2017/1/11.
  */
-abstract class MqCallback implements EventCallback {
+public abstract class MqCallback implements EventCallback {
 
     /**
      * 异步事件处理完成时的回调接口

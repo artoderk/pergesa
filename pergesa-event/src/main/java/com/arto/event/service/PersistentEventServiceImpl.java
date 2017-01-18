@@ -2,7 +2,7 @@ package com.arto.event.service;
 
 import com.arto.event.build.Event;
 import com.arto.event.common.EventStatusEnum;
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 import com.arto.event.exception.PersistentEventLockException;
 import com.arto.event.storage.EventStorage;
 import com.arto.event.util.DateUtil;
@@ -22,24 +22,24 @@ import java.util.Random;
 public class PersistentEventServiceImpl implements PersistentEventService {
 
     /** 无限次重试时的重试间隔为5分钟 */
-    @Value("${kafka.retry.interval}")
-    private int retryInterval = 5 * 60;
+    @Value("${kafka.retry.interval:300}")
+    private int retryInterval;
 
     /** 处理持久化消息时，默认采用悲观锁 */
-    @Value("${event.persistent.lock.optimistic}")
-    private boolean lockOptimistic = false;
+    @Value("${event.persistent.lock.optimistic:false}")
+    private boolean lockOptimistic;
 
     /** 系统名 */
-    @Value("${sar.name}")
-    private String systemId = "webapp";
+    @Value("${sar.name:webapp}")
+    private String systemId;
 
     /** 事件分片数 */
-    @Value("${event.storage.tag}")
-    private int tag = 10;
+    @Value("${event.storage.tag:10}")
+    private int tag;
 
     /** 默认重试次数 */
-    @Value("${event.retry.times}")
-    private int defaultRetry = 5;
+    @Value("${event.retry.times:5}")
+    private int defaultRetry;
 
     /** 事件持久化操作 */
     @Autowired

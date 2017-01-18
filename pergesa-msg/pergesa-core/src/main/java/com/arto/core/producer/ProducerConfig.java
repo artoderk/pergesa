@@ -3,12 +3,14 @@ package com.arto.core.producer;
 import com.arto.core.build.MqConfig;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Created by xiong.j on 2017/1/11.
  */
 @Setter
 @Getter
+@ToString
 public class ProducerConfig extends MqConfig {
 
     /** 消息优先级 1:非常重要(不会丢失) 2:重要(极端情况下丢失) 3:不重要(异步发送) */

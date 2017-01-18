@@ -8,7 +8,14 @@
 
     <context:component-scan base-package="com.arto"/>
 
-    <context:property-placeholder location="classpath:pergesa-event.properties" />
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreUnresolvablePlaceholders" value="true" />
+        <property name="locations">
+            <list>
+                <value>classpath:pergesa-event.properties</value>
+            </list>
+        </property>
+    </bean>
 
     <bean id="eventProcessExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
         <property name="corePoolSize" value="${eventProcessExecutor.corePoolSize}" />

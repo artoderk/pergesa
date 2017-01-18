@@ -1,4 +1,4 @@
-package com.arto.event.domain;
+package com.arto.event.storage;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,7 +1,7 @@
 package com.arto.event.service;
 
 import com.alibaba.fastjson.JSON;
-import com.arto.event.PersistentEvent;
+import com.arto.event.storage.EventInfo;
 
 /**
  * Created by xiong.j on 2016/12/28.
@@ -9,14 +9,14 @@ import com.arto.event.PersistentEvent;
 public class TransactionMessageProducerTest  {
 
     public static void main(String args[]){
-        PersistentEvent e = new PersistentEvent();
+        EventInfo e = new EventInfo();
         e.setId(1);
         e.setMemo("Haha");
 
         TransactionMessageProducerTest ec = new TransactionMessageProducerTest();
         ec.send(e, "key", new Object());
 
-        PersistentEvent e1 = JSON.parseObject("{\"memo\":\"Haha\",\"id\":1,\"tag\":0,\"status\":-1}", PersistentEvent.class);
+        EventInfo e1 = JSON.parseObject("{\"memo\":\"Haha\",\"id\":1,\"tag\":0,\"status\":-1}", EventInfo.class);
         System.out.println(e1.getMemo());
     }
 

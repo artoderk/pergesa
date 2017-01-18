@@ -1,6 +1,6 @@
 package com.arto.event.recovery;
 
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
 import com.arto.event.processor.PersistentEventProcessor;
 import com.arto.event.util.DateUtil;
@@ -25,12 +25,12 @@ public class EventRecoveryServiceImpl implements EventRecoveryService {
     @Autowired
     private PersistentEventProcessor persistentEventProcessor;
 
-    @Value("${event.start.day}")
-    private int day = 7;
+    @Value("${event.start.day:7}")
+    private int day;
 
     /** 系统名 */
-    @Value("${sar.name}")
-    private String systemId = "";
+    @Value("${sar.name:webapp}")
+    private String systemId;
 
     @Override
     public List<EventInfo> fetchData(List<Integer> tag) {

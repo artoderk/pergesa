@@ -2,12 +2,14 @@ package com.arto.core.build;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Created by xiong.j on 2017/1/12.
  */
 @Setter
 @Getter
+@ToString
 public class MqConfig {
 
     /** 消息中间件类型 */

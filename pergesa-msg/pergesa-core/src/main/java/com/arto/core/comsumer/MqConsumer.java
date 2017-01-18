@@ -5,6 +5,8 @@ package com.arto.core.comsumer;
  */
 public interface MqConsumer {
 
-    public void receive();
+    void receive(final Class type, final MqListener listener);
+
+    void receiveWithParallel(final Class type, final int numThreads, final MqListener listener);
 
 }

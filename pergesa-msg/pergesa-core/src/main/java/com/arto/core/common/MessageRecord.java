@@ -26,5 +26,5 @@ public class MessageRecord {
     private Object message;
 
     /** 事务 启用后模拟消息两阶段提交 */
-    private boolean transaction;
+    transient private boolean transaction;
 }

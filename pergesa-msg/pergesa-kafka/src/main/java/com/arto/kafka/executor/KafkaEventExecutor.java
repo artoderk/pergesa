@@ -1,6 +1,6 @@
 package com.arto.kafka.executor;
 
-import com.arto.event.common.Constants;
+import com.arto.core.common.Constants;
 import com.arto.event.build.EventBusFactory;
 import com.arto.kafka.listener.KafkaEventListener;
 import org.springframework.beans.factory.annotation.Autowired;

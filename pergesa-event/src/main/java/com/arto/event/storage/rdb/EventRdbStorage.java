@@ -2,7 +2,7 @@ package com.arto.event.storage.rdb;
 
 import com.arto.event.common.Constants;
 import com.arto.event.common.EventStatusEnum;
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
 import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +35,9 @@ public class EventRdbStorage implements EventStorage {
 
 	@Override
 	public int create(EventInfo eventInfo) throws SQLException {
-		String sql = ("INSERT INTO EVENT_STORAGE(ID, TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, "
-				+ "STATUS, PAYLOAD, RETRIED_COUNT_D, GMT_CREATED, GMT_MODIFIED) VALUES ("
-				+ ":id, :tag, :systemId, :businessId, :businessType, :type, :status, :payload, retriedCountD,"
+		String sql = ("INSERT INTO EVENT_STORAGE(TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, "
+				+ "EVENT_TYPE, STATUS, PAYLOAD, RETRIED_COUNT_D, GMT_CREATED, GMT_MODIFIED) VALUES ("
+				+ ":tag, :systemId, :businessId, :businessType, :eventType, :status, :payload, :defaultRetriedCount,"
 				+ Constants.PG_DATE_SQL + "," + Constants.PG_DATE_SQL + " )");
 		return npJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(eventInfo));
 	}
@@ -127,7 +127,7 @@ public class EventRdbStorage implements EventStorage {
 
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId");
-		builder.append(" AND TAG IN (:tag)" );
+		builder.append(" AND TAG IN (: tag)" );
 		builder.append(" AND GMT_MODIFIED > :currentDate ");
 		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
 		builder.append(" AND NEXT_RETRY_TIME IS NULL ");
@@ -158,6 +158,7 @@ public class EventRdbStorage implements EventStorage {
 			eventInfo.setSystemId(rs.getString("SYSTEM_ID"));
 			eventInfo.setBusinessId(rs.getString("BUSINESS_ID"));
 			eventInfo.setBusinessType(rs.getString("BUSINESS_TYPE"));
+			eventInfo.setEventType(rs.getString("EVENT_TYPE"));
 			eventInfo.setStatus(rs.getInt("STATUS"));
 			eventInfo.setPayload(rs.getString("PAYLOAD"));
 			eventInfo.setDefaultRetriedCount(rs.getInt("RETRIED_COUNT_D"));

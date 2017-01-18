@@ -1,6 +1,5 @@
 package com.arto.kafka;
 
-import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -15,18 +14,20 @@ public class Test {
     }
 
     public static void main(String args[]){
-        Test t = new Test();
-        long time = System.currentTimeMillis();
-        Date date = new Date(time);
-        Timestamp timestamp = new Timestamp(time);
-        System.out.println("util date:" + new java.util.Date(time));
-        System.out.println("Sql date:" + new Timestamp(time));
-        System.out.println(date.getTime() + "@@" + timestamp.getTime());
-        for (int i = 0; i <= 3; i++) {
-            System.out.println(Math.round(Math.pow(9, 3 - i))
-                    * 1000);
+//        Test t = new Test();
+//        long time = System.currentTimeMillis();
+//        Date date = new Date(time);
+//        Timestamp timestamp = new Timestamp(time);
+//        System.out.println("util date:" + new java.util.Date(time));
+//        System.out.println("Sql date:" + new Timestamp(time));
+//        System.out.println(date.getTime() + "@@" + timestamp.getTime());
+//        for (int i = 0; i <= 3; i++) {
+//            System.out.println(Math.round(Math.pow(9, 3 - i))
+//                    * 1000);
+//
+//            System.out.println(t.getNextRetryTime(3, i).getTime());
+//        }
 
-            System.out.println(t.getNextRetryTime(3, i).getTime());
-        }
+        System.out.println(201702 >>> 1);
     }
 }

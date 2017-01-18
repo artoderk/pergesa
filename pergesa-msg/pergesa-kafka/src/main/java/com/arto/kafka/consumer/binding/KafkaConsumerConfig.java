@@ -1,4 +1,4 @@
-package com.arto.kafka.build;
+package com.arto.kafka.consumer.binding;
 
 import com.arto.core.comsumer.ConsumerConfig;
 import lombok.Getter;
@@ -12,4 +12,8 @@ import lombok.ToString;
 @Getter
 @ToString
 public class KafkaConsumerConfig extends ConsumerConfig {
+
+    /** 并发线程数量 */
+    private int numThreads;
+
 }

@@ -2,12 +2,14 @@ package com.arto.event.build;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Created by xiongjie on 2016/12/21.
  */
 @Setter
 @Getter
+@ToString
 public class Event {
 
     /** 事件分组 */

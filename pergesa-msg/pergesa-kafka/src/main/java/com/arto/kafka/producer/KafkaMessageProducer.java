@@ -3,6 +3,8 @@ package com.arto.kafka.producer;
 import com.arto.core.exception.MqClientException;
 import com.arto.kafka.event.KafkaEvent;
 import com.google.common.base.Strings;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -19,13 +21,15 @@ import java.util.concurrent.TimeUnit;
  *
  * Created by xiong.j on 2016/7/21.
  */
+@Getter
+@Setter
 @Slf4j
 @Component
 public class KafkaMessageProducer {
 
     /** 同步发送时的超时时间 */
-    @Value("${kafka.producer.timeout}")
-    private int timeout = 30;
+    @Value("${kafka.producer.timeout:30}")
+    private int timeout;
 
     /** 生产者工厂 */
     @Autowired
@@ -54,19 +58,25 @@ public class KafkaMessageProducer {
                 producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getPartition(), event.getKey(), event.getPayload());
             }
 
-            if (event.getCallback() == null) {
+            if (event.getPriority() != 0) {
                 // 同步发送
                 future = factory.getProducer(event.getPriority()).send(producerRecord);
                 RecordMetadata metadata = (RecordMetadata) future.get(timeout, TimeUnit.SECONDS);
                 log.info("Kafka Send to topic:" + event.getDestination() + ", partition" + metadata.partition() + ", message:" + event.getPayload());
             } else {
                 // 异步发送
-                future = factory.getProducer(event.getPriority()).send(producerRecord, new Callback() {
-                    @Override
-                    public void onCompletion(RecordMetadata metadata, Exception exception) {
-                        event.getCallback().onCompletion(event);
-                    }
-                });
+                if (event.getCallback() != null) {
+                    // 有同调
+                    future = factory.getProducer(event.getPriority()).send(producerRecord, new Callback() {
+                        @Override
+                        public void onCompletion(RecordMetadata metadata, Exception exception) {
+                            event.getCallback().onCompletion(event);
+                        }
+                    });
+                } else {
+                    // 无回调
+                    future = factory.getProducer(event.getPriority()).send(producerRecord, null);
+                }
                 log.info("Kafka Asynchronously send to topic:" + event.getDestination() + ", message:" + event.getPayload());
             }
         } catch (Throwable e) {

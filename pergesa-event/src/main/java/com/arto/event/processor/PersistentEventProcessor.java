@@ -1,6 +1,6 @@
 package com.arto.event.processor;
 
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 import com.arto.event.router.PersistentEventRouter;
 import com.arto.event.router.PersistentEventRouterFactory;
 import lombok.extern.slf4j.Slf4j;

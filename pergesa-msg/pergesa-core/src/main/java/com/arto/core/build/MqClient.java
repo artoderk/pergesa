@@ -57,9 +57,9 @@ public class MqClient {
      */
     public synchronized static void setMqFactory(String key, MqFactory factory){
         if (factoryMap.containsKey(key)) {
-            factoryMap.put(key, factory);
-        } else {
             throw new MqClientException("Can't override exist MqFactory, key:" + key);
+        } else {
+            factoryMap.put(key, factory);
         }
     }
 

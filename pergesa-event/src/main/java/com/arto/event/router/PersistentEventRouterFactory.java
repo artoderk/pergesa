@@ -1,6 +1,6 @@
 package com.arto.event.router;
 
-import com.arto.event.domain.EventInfo;
+import com.arto.event.storage.EventInfo;
 import com.google.common.base.Strings;
 import javassist.*;
 

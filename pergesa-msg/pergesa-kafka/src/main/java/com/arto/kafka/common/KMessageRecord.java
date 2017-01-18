@@ -14,10 +14,10 @@ import lombok.ToString;
 public class KMessageRecord extends MessageRecord{
 
     /** 主键 */
-    private String key;
+    transient private String key;
 
     /** 分区 */
-    private int partition = -1;
+    transient private int partition = -1;
 
     public KMessageRecord(){};
 
