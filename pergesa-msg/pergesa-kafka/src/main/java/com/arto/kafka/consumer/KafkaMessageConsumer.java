@@ -1,5 +1,6 @@
 package com.arto.kafka.consumer;
 
+import com.arto.core.common.MessageRecord;
 import com.arto.event.util.ThreadUtil;
 import com.arto.kafka.consumer.binding.KafkaConsumerBinding;
 import lombok.extern.slf4j.Slf4j;
@@ -81,21 +82,21 @@ public class KafkaMessageConsumer {
     private class PollThread implements Runnable{
 
         /** 消费者 */
-        private KafkaConsumer<String, String> consumer;
+        private KafkaConsumer<String, MessageRecord> consumer;
 
         /** 消费者订阅的Topic集合 */
         private Collection<String> topic;
 
         /** 拉取的消息集合(以Topic分类) */
-        private Map<String, LinkedBlockingQueue<List<ConsumerRecord<String, String>>>> topicRecords
-                = new ConcurrentHashMap<String, LinkedBlockingQueue<List<ConsumerRecord<String, String>>>>();
+        private Map<String, LinkedBlockingQueue<List<ConsumerRecord<String, MessageRecord>>>> topicRecords
+                = new ConcurrentHashMap<String, LinkedBlockingQueue<List<ConsumerRecord<String, MessageRecord>>>>();
 
         /**
          * Kafka消息拉取线程构造方法
          *
          * @param consumer
          */
-        public PollThread(final KafkaConsumer<String, String> consumer){
+        public PollThread(final KafkaConsumer<String, MessageRecord> consumer){
             this.consumer = consumer;
         }
 
@@ -108,8 +109,8 @@ public class KafkaMessageConsumer {
             // 更新订阅的Topic集合
             topic.add(kafkaConsumerBinding.getConfig().getDestination());
             // 初始化Topic消费线程
-            LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue
-                    = new LinkedBlockingQueue<List<ConsumerRecord<String, String>>>();
+            LinkedBlockingQueue<List<ConsumerRecord<String, MessageRecord>>> topicQueue
+                    = new LinkedBlockingQueue<List<ConsumerRecord<String, MessageRecord>>>();
             topicRecords.put(kafkaConsumerBinding.getConfig().getDestination(), topicQueue);
             kafkaConsumerBinding.start(consumer, topicQueue);
             // 更新拉取的Topic
@@ -126,7 +127,7 @@ public class KafkaMessageConsumer {
                     try {
                         if (consumer.subscription().size() > 0) {
                             // 拉取消息
-                            ConsumerRecords<String, String> records = consumer.poll(500);
+                            ConsumerRecords<String, MessageRecord> records = consumer.poll(500);
                             for (TopicPartition partition : records.partitions()) {
                                 // 将拉取到的消息按Topic分类
                                 topicRecords.get(partition.topic()).add(records.records(partition));

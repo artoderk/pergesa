@@ -1,7 +1,7 @@
 package com.arto.core.build;
 
-import com.arto.core.comsumer.ConsumerConfig;
-import com.arto.core.comsumer.MqConsumer;
+import com.arto.core.consumer.ConsumerConfig;
+import com.arto.core.consumer.MqConsumer;
 import com.arto.core.producer.MqProducer;
 import com.arto.core.producer.ProducerConfig;
 

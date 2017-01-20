@@ -2,12 +2,13 @@ package com.arto.kafka.build;
 
 import com.arto.core.build.MqClient;
 import com.arto.core.build.MqFactory;
-import com.arto.core.comsumer.ConsumerConfig;
-import com.arto.core.comsumer.MqConsumer;
+import com.arto.core.consumer.ConsumerConfig;
+import com.arto.core.consumer.MqConsumer;
 import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.arto.core.producer.ProducerConfig;
 import com.arto.kafka.common.Constants;
+import com.arto.kafka.consumer.binding.KafkaConsumerBinding;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.producer.binding.KafkaProducerBinding;
 import com.arto.kafka.producer.binding.KafkaProducerConfig;
@@ -86,8 +87,9 @@ public class KafkaClientFactory implements MqFactory {
                     if (consumerMap.containsKey(config.getDestination())) {
                         return consumerMap.get(config.getDestination());
                     } else {
-                        // TODO 生成一个新的消费者
-                        consumerMap.put(config.getDestination(), null);
+                        // 生成一个新的消费者
+                        KafkaConsumerBinding consumer = new KafkaConsumerBinding((KafkaConsumerConfig)config);
+                        consumerMap.put(config.getDestination(), consumer);
                         log.info("Binding kafka consumer on config : " + config);
                         return null;
                     }

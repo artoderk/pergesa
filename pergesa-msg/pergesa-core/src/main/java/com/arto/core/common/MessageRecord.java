@@ -10,7 +10,7 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-public class MessageRecord {
+public class MessageRecord<T> {
 
     /** 业务凭证流水号 */
     private String businessId;
@@ -22,8 +22,14 @@ public class MessageRecord {
     @Deprecated
     private String selectKey;
 
+    /** 消息中件间生成的Id
+     *  Kafka: K + 两位分区号 + offset
+     *  AMQ  : messageId
+     **/
+    private String messageId;
+
     /** 消息内容 */
-    private Object message;
+    private T message;
 
     /** 事务 启用后模拟消息两阶段提交 */
     transient private boolean transaction;

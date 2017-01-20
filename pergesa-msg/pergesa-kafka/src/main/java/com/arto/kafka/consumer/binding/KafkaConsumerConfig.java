@@ -1,6 +1,6 @@
 package com.arto.kafka.consumer.binding;
 
-import com.arto.core.comsumer.ConsumerConfig;
+import com.arto.core.consumer.ConsumerConfig;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

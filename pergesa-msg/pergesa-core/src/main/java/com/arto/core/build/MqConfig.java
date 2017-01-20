@@ -10,7 +10,7 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-public class MqConfig {
+public class MqConfig<T> {
 
     /** 消息中间件类型 */
     private String type;
