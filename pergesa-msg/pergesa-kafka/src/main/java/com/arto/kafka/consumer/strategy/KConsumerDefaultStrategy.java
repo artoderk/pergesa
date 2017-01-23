@@ -2,6 +2,7 @@ package com.arto.kafka.consumer.strategy;
 
 import com.alibaba.fastjson.JSON;
 import com.arto.core.common.MessageRecord;
+import com.arto.event.build.Event;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.event.util.ThreadUtil;
@@ -10,6 +11,7 @@ import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.event.KafkaConsumeEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+
 import static com.arto.kafka.common.KUtil.buildMessageId;
 
 /**
@@ -48,7 +50,7 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
                     infiniteRetry(config, record);
                 } else {
                     // 消息处理错误，暂停处理一小会
-                    ThreadUtil.sleep(20000, Thread.currentThread(), log);
+                    ThreadUtil.sleep(10000, Thread.currentThread(), log);
                 }
             }
             // 消费成功则退出循环
@@ -60,11 +62,11 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
 
     private void infiniteRetry(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record) {
         // 转换为事件
-        KafkaConsumeEvent event = buildEvent(config, record);
+        Event event = buildEvent(config, record);
         // 无限重试直到持久化成功
         while (true){
             try {
-                service.persist(event, Constants.KAFKA);
+                service.persist(event, Constants.K_CONSUME_EVENT_BEAN);
                 break;
             } catch (Exception e) {
                 log.warn("Persist message failed, waiting for retry. record=" + record, e);
@@ -75,7 +77,8 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
         log.debug("Kafka receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
     }
 
-    private KafkaConsumeEvent buildEvent(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record){
+    private Event buildEvent(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record){
+        // 生成事件
         KafkaConsumeEvent event = new KafkaConsumeEvent();
         // 事件分组
         event.setGroup(com.arto.core.common.Constants.MQ);
@@ -83,11 +86,7 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
         event.setBusinessId(record.value().getMessageId());
         // 业务类型
         event.setBusinessType(Constants.K_CONSUME);
-        // Topic
-        event.setDestination(record.topic());
-        // 优先级
-        event.setPriority(config.getPriority());
-        // 消息 使用fastjson序列化
+        // 消息
         event.setPayload(JSON.toJSONString(record.value()));
         return event;
     }

@@ -91,7 +91,7 @@ public class KafkaClientFactory implements MqFactory {
                         KafkaConsumerBinding consumer = new KafkaConsumerBinding((KafkaConsumerConfig)config);
                         consumerMap.put(config.getDestination(), consumer);
                         log.info("Binding kafka consumer on config : " + config);
-                        return null;
+                        return consumer;
                     }
                 }
             }

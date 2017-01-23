@@ -44,8 +44,8 @@ public class KafkaMessageProducer {
     public void send(final KafkaEvent event) throws MqClientException {
         try {
             log.info("Kafka process event:", event);
-            Future future;
-            ProducerRecord producerRecord;
+            Future future = null;
+            ProducerRecord producerRecord = null;
             if (event.getPartition() == -1) {
                 // 没有设置分区
                 if (Strings.isNullOrEmpty(event.getKey())) {
@@ -58,7 +58,7 @@ public class KafkaMessageProducer {
                 producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getPartition(), event.getKey(), event.getPayload());
             }
 
-            if (event.getPriority() != 0) {
+            if (event.getPriority() != 3) {
                 // 同步发送
                 future = factory.getProducer(event.getPriority()).send(producerRecord);
                 RecordMetadata metadata = (RecordMetadata) future.get(timeout, TimeUnit.SECONDS);

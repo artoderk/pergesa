@@ -18,7 +18,7 @@ public class KMessageRecordSerializer implements Serializer<KMessageRecord> {
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
 
-        String propertyName = isKey ? "key.serializer.encoding":"value.serializer.encoding";
+        String propertyName = isKey ? "key.serializer.encoding" : "value.serializer.encoding";
         Object encodingValue = configs.get(propertyName);
 
         if(encodingValue == null) {
@@ -33,7 +33,7 @@ public class KMessageRecordSerializer implements Serializer<KMessageRecord> {
     @Override
     public byte[] serialize(String topic, KMessageRecord message) {
         try {
-            return message == null?null: JSON.toJSON(message).toString().getBytes(this.encoding);
+            return message == null ? null : JSON.toJSON(message).toString().getBytes(this.encoding);
         } catch (UnsupportedEncodingException e) {
             throw new SerializationException("Error when serializing 'KMessageRecord' to byte[] due to unsupported encoding " + this.encoding);
         }

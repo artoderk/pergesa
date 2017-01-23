@@ -50,8 +50,15 @@ public class KConsumerStrategyFactory {
             KConsumerStrategy strategy;
             switch (priority) {
                 case 1:
+                    // 重要消息，不能容忍消息丢失
                     strategy = new KConsumerDefaultStrategy();
                     break;
+//                case 2:
+//                    // TODO 其它消费优先级待实现
+//                    break;
+//                case 3:
+//                    // 不重要消息，可容忍消息丢失
+//                    break;
                 default:
                     strategy = new KConsumerDefaultStrategy();
             }

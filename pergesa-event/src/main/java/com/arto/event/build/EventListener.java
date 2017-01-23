@@ -17,9 +17,6 @@
 
 package com.arto.event.build;
 
-import com.google.common.eventbus.AllowConcurrentEvents;
-import com.google.common.eventbus.Subscribe;
-
 /**
  * 事件监听器.
  *
@@ -32,7 +29,5 @@ public interface EventListener<T> extends EventIdentity {
      * 
      * @param event 运行事件
      */
-    @Subscribe
-    @AllowConcurrentEvents
     void listen(T event);
 }

@@ -43,19 +43,24 @@ public class KafkaConsumerThread implements Callable{
         TopicPartition topicPartition = new TopicPartition(records.get(0).topic(), records.get(0).partition());
 
         for (ConsumerRecord<String, MessageRecord> record : records) {
+            log.info("consume message record:" + record);
+            // 处理消息
             KConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
-
-            Map<TopicPartition, OffsetAndMetadata> offsets = Collections.singletonMap(topicPartition, new OffsetAndMetadata(record.offset() + 1));
-            consumer.commitSync();
+            // 提交消费标识 TODO 根据优先级处理消息标识与重试
+            commitSync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
         }
-        // TODO 根据优先级处理消息标识与重试
 
         // TODO 使用单独线程管理消费的暂停与恢复
         consumer.resume(Collections.singleton(topicPartition));
         return null;
     }
 
-    private void commitOffset(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
+    private void commitSync(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
+        Map<TopicPartition, OffsetAndMetadata> offsets = Collections.singletonMap(topicPartition, offsetAndMetadata);
+        consumer.commitSync(offsets);
+    }
+
+    private void commitAsync(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
         Map<TopicPartition, OffsetAndMetadata> offsets = Collections.singletonMap(topicPartition, offsetAndMetadata);
         consumer.commitSync(offsets);
     }

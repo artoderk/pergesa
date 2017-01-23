@@ -1,5 +1,6 @@
 package com.arto.kafka.producer;
 
+import com.arto.kafka.common.KAcksEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,28 +59,6 @@ public class KafkaMessageProducerFactory {
         }
     }
 
-    private synchronized KafkaProducer<String, String> createProducer(final Integer priority) throws Exception {
-        if (producerMap.containsKey(priority)) {
-            return producerMap.get(priority);
-        }
-        Properties props = new Properties();
-        props.put("bootstrap.servers", servers);
-        props.put("client.id", client);
-        props.put("acks", String.valueOf(priority));
-        props.put("retries", retries);
-        props.put("batch.size", batchSize);
-        props.put("linger.ms", lingerMs);
-        props.put("buffer.memory", bufferMemory);
-        props.put("key.serializer", keySerializer);
-        props.put("value.serializer", valueSerializer);
-
-        prepareEnvironments(priority, props);
-        KafkaProducer<String, String> producer = new KafkaProducer<String, String>(props);
-        producerMap.put(priority, producer);
-        log.info("Create kafka producer successful with acks: " + priority);
-        return producer;
-    }
-
     @PreDestroy
     public synchronized void destroy() throws Exception {
         for(Map.Entry<Integer, KafkaProducer<String, String>> entry : producerMap.entrySet()){
@@ -95,5 +74,38 @@ public class KafkaMessageProducerFactory {
      * @param props 配置
      */
     protected void prepareEnvironments(final Integer priority, final Properties props) {
+    }
+
+    private synchronized KafkaProducer<String, String> createProducer(final Integer priority) throws Exception {
+        if (producerMap.containsKey(priority)) {
+            return producerMap.get(priority);
+        }
+        Properties props = new Properties();
+        props.put("bootstrap.servers", servers);
+        props.put("client.id", client);
+        props.put("acks", String.valueOf(convert2Ack(priority)));
+        props.put("retries", retries);
+        props.put("batch.size", batchSize);
+        props.put("linger.ms", lingerMs);
+        props.put("buffer.memory", bufferMemory);
+        props.put("key.serializer", keySerializer);
+        props.put("value.serializer", valueSerializer);
+
+        prepareEnvironments(priority, props);
+        KafkaProducer<String, String> producer = new KafkaProducer<String, String>(props);
+        producerMap.put(priority, producer);
+        log.info("Create kafka producer successful with acks: " + priority);
+        return producer;
+    }
+
+    private int convert2Ack(final Integer priority){
+        // 优先级转换为Kafka的acks
+        if (priority == -1 || priority == 1){
+            return KAcksEnum.ACK_ALL.getCode();
+        } else if (priority == 2){
+            return KAcksEnum.ACK_LEADER.getCode();
+        } else {
+            return KAcksEnum.ACK_NOWAIT.getCode();
+        }
     }
 }

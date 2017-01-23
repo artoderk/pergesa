@@ -12,7 +12,7 @@ public enum KAcksEnum {
 
     ACK_LEADER(1, "等待主确认"),
 
-    ACK_ALL(2, "等待全部服务器确认");
+    ACK_ALL(-1, "等待全部服务器确认");
 
     private int    code;
 

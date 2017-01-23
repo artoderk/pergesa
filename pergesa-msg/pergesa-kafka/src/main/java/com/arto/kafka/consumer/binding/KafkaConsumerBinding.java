@@ -1,6 +1,5 @@
 package com.arto.kafka.consumer.binding;
 
-import com.arto.core.common.MessageRecord;
 import com.arto.core.consumer.MqConsumer;
 import com.arto.core.consumer.MqListener;
 import com.arto.event.util.SpringContextHolder;
@@ -64,8 +63,8 @@ public class KafkaConsumerBinding implements MqConsumer {
      * @param consumer
      * @param topicQueue
      */
-    public void start(final KafkaConsumer<String, MessageRecord> consumer
-            , final LinkedBlockingQueue<List<ConsumerRecord<String, MessageRecord>>> topicQueue) {
+    public void start(final KafkaConsumer<java.lang.String, String> consumer
+            , final LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue) {
         if (localThread == null) {
             localThread = new ConsumerWithTopicThread(consumer, topicQueue);
             new Thread(localThread).start();
@@ -97,10 +96,10 @@ public class KafkaConsumerBinding implements MqConsumer {
     private class ConsumerWithTopicThread implements Runnable {
 
         /** Kafka消费者 */
-        private KafkaConsumer<String, MessageRecord> consumer;
+        private KafkaConsumer<String, String> consumer;
 
         /** Topic拉取的消息(整个Topic) */
-        private LinkedBlockingQueue<List<ConsumerRecord<String, MessageRecord>>> topicQueue;
+        private LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue;
 
         /** 消息处理线程池 */
         private ExecutorService executor;
@@ -111,8 +110,8 @@ public class KafkaConsumerBinding implements MqConsumer {
          * @param consumer
          * @param topicQueue
          */
-        public ConsumerWithTopicThread(final KafkaConsumer<String, MessageRecord> consumer
-                , final LinkedBlockingQueue<List<ConsumerRecord<String, MessageRecord>>> topicQueue) {
+        public ConsumerWithTopicThread(final KafkaConsumer<String, String> consumer
+                , final LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue) {
             this.consumer = consumer;
             this.topicQueue = topicQueue;
             executor = Executors.newCachedThreadPool();
@@ -121,12 +120,13 @@ public class KafkaConsumerBinding implements MqConsumer {
         @Override
         public void run() {
             while (!closeFlag.get()) {
-                List<ConsumerRecord<String, MessageRecord>> records = null;
+                List<ConsumerRecord<String, String>> records = null;
                 TopicPartition topicPartition = null;
                 try {
                     // 获取拉取到的消息
-                    records = topicQueue.poll(1, TimeUnit.SECONDS);
-                    if (topicQueue.size() > 0) {
+                    records = topicQueue.poll(10, TimeUnit.SECONDS);
+                    if (records != null) {
+                        System.out.println("###### ConsumerWithTopicThread records:" + records);
                         // 暂停当前分区的消息拉取直到消息处理完成
                         topicPartition = new TopicPartition(config.getDestination(), records.get(0).partition());
                         consumer.pause(singleton(topicPartition));
@@ -136,7 +136,7 @@ public class KafkaConsumerBinding implements MqConsumer {
                     }
                 } catch (InterruptedException e) {
                     log.warn("Consumer thread interrupted. ", e);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.error("Topic records process failed. Topic=" + config.getDestination(), e);
                 }
             }

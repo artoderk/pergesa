@@ -9,7 +9,6 @@ import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.common.KMessageRecord;
-import com.arto.kafka.common.KAcksEnum;
 import com.arto.kafka.event.KafkaEvent;
 
 /**
@@ -28,8 +27,6 @@ public class KafkaProducerBinding implements MqProducer {
     public KafkaProducerBinding(KafkaProducerConfig config) {
         verifyEvent(config);
         this.config = config;
-        // 优先级转换为Kafka的acks
-        this.config.setPriority(convert2Ack(config));
         // 暂时依赖Spring获取
         this.service = SpringContextHolder.getBean("persistentEventService");
     }
@@ -106,20 +103,6 @@ public class KafkaProducerBinding implements MqProducer {
         // 回调
         event.setCallback(config.getCallback());
         return event;
-    }
-
-    private int convert2Ack(KafkaProducerConfig config){
-        if (config.getPriority() == 3) {
-            return KAcksEnum.ACK_NOWAIT.getCode();
-        } else if (config.getPriority() == 0 ){
-            return KAcksEnum.ACK_NOWAIT.getCode();
-        } else if (config.getPriority() == 1){
-            return KAcksEnum.ACK_ALL.getCode();
-        } else if (config.getPriority() == 2){
-            return KAcksEnum.ACK_LEADER.getCode();
-        } else {
-            return KAcksEnum.ACK_ALL.getCode();
-        }
     }
 
     private void verifyEvent(KafkaProducerConfig config){

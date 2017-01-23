@@ -16,10 +16,7 @@ public class MqEvent extends Event {
     /** 目的地 */
     private String destination;
 
-    /** 对应生产者acks */
-    private int priority = -1;
-
-    /** 消息内容 */
-    private String payload;
+    /** 优先级 */
+    private int priority = 1;
 
 }

@@ -5,10 +5,15 @@ import com.arto.event.service.EventAdviceService;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.event.KafkaEvent;
 import com.arto.kafka.producer.KafkaMessageProducer;
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
+ * 消息发送事件
+ * TODO 需考虑切换消息中件间后持久化消息的处理
+ *
  * Created by xiong.j on 2017/1/6.
  */
 @Component
@@ -20,6 +25,8 @@ public class KafkaEventListener implements EventListener<KafkaEvent> {
     @Autowired
     private EventAdviceService service;
 
+    @Subscribe
+    @AllowConcurrentEvents
     @Override
     public void listen(KafkaEvent event) {
         try {

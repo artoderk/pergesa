@@ -1,6 +1,5 @@
 package com.arto.kafka.consumer;
 
-import com.arto.core.common.MessageRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,8 +42,8 @@ public class KafkaMessageConsumerFactory {
     @Value("${kafka.value.deserializer:org.apache.kafka.common.serialization.StringDeserializer}")
     private String valueDeserializer;
 
-    private ConcurrentMap<String, KafkaConsumer<String, MessageRecord>> consumerMap
-            = new ConcurrentHashMap<String, KafkaConsumer<String, MessageRecord>>(3);
+    private ConcurrentMap<String, KafkaConsumer<String, String>> consumerMap
+            = new ConcurrentHashMap<String, KafkaConsumer<String, String>>(3);
 
     private final String defaultKey = "default";
 
@@ -54,7 +53,7 @@ public class KafkaMessageConsumerFactory {
      * @return
      * @throws Exception
      */
-    public KafkaConsumer<String, MessageRecord> getConsumer() throws Exception {
+    public KafkaConsumer<String, String> getConsumer() throws Exception {
         if (consumerMap.containsKey(defaultKey)) {
             return consumerMap.get(defaultKey);
         } else {
@@ -62,7 +61,7 @@ public class KafkaMessageConsumerFactory {
         }
     }
 
-    private synchronized KafkaConsumer<String, MessageRecord> createConsumer() throws Exception {
+    private synchronized KafkaConsumer<String, String> createConsumer() throws Exception {
         if (consumerMap.containsKey(defaultKey)) {
             return consumerMap.get(defaultKey);
         }
@@ -77,7 +76,7 @@ public class KafkaMessageConsumerFactory {
         props.put("value.deserializer", valueDeserializer);
 
         prepareEnvironments(props);
-        KafkaConsumer<String, MessageRecord> consumer = new KafkaConsumer<String, MessageRecord>(props);
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(props);
         consumerMap.put(defaultKey, consumer);
         log.info("Create kafka consumer successful. config:" + props);
         return consumer;
@@ -85,7 +84,7 @@ public class KafkaMessageConsumerFactory {
 
     @PreDestroy
     public synchronized void destroy() throws Exception {
-        for(Map.Entry<String, KafkaConsumer<String, MessageRecord>> entry : consumerMap.entrySet()){
+        for(Map.Entry<String, KafkaConsumer<String, String>> entry : consumerMap.entrySet()){
             entry.getValue().close();
         }
         log.info("Destroy kafka consumer successful.");
