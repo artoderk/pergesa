@@ -40,18 +40,19 @@ public class KafkaConsumerBinding implements MqConsumer {
     public KafkaConsumerBinding(KafkaConsumerConfig config) {
         this.config = config;
         this.consumer = SpringContextHolder.getBean("kafkaMessageConsumer");
+        consumer.subscribe(this);
     }
 
     @Override
     public void receive(Class type, MqListener listener) {
-        config.setClz(type);
+        config.setDeserializer(type);
         config.setListener(listener);
         consumer.subscribe(this);
     }
 
     @Override
     public void receiveWithParallel(Class type, int numThreads, MqListener listener) {
-        config.setClz(type);
+        config.setDeserializer(type);
         config.setListener(listener);
         config.setNumThreads(numThreads);
         consumer.subscribe(this);

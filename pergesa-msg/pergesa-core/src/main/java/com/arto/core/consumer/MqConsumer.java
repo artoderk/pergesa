@@ -1,6 +1,9 @@
 package com.arto.core.consumer;
 
 /**
+ * @Deprecated
+ * TODO 生产消息者的时候直接设定配置，此类可能废弃.
+ *
  * Created by xiong.j on 2017/1/11.
  */
 public interface MqConsumer {
@@ -13,6 +16,7 @@ public interface MqConsumer {
      * @param type 消息监听者接收的消息类型，框架会据此反序列化消息
      * @param listener 消息监听者
      */
+    @Deprecated
     void receive(final Class type, final MqListener listener);
 
     /**

@@ -1,6 +1,5 @@
 package com.arto.kafka.common;
 
-import com.arto.core.common.MessageRecord;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -11,11 +10,18 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class KUtil {
 
-    public static String buildMessageId(final ConsumerRecord<String, MessageRecord> record) {
+    /**
+     * 获取消息ID
+     *  K + '-' + topic + '-' + partition + '-' + offset
+     *
+     * @param record
+     * @return
+     */
+    public static String buildMessageId(final ConsumerRecord<String, String> record) {
         StringBuilder sb = new StringBuilder();
         sb.append(Constants.K).append("-");
         sb.append(record.topic()).append("-");
-        sb.append(record.partition()).append(record.offset());
+        sb.append(record.partition()).append("-").append(record.offset());
         return sb.toString();
     }
 

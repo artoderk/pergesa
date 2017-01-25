@@ -9,21 +9,21 @@ public class DateUtil {
  
 	private static final long SECOND = 1000;
 	
-	private static final long MINUTE = 60*SECOND;
+	private static final long MINUTE = 60 * SECOND;
 	
-	private static final long HOUR = 60*MINUTE;
+	private static final long HOUR = 60 * MINUTE;
 	
-	private static final long DAY = 24*HOUR;
+	private static final long DAY = 24 * HOUR;
 	
 	private DateUtil(){}
 	
-	public static Timestamp getPrevDay(int interval){
-		return new Timestamp(getPrevTime(interval));
+	public static Timestamp getPrevDayTimestamp(int interval){
+		return new Timestamp(getPrevDayMillis(interval));
 	}
 
-	private static long getPrevTime(int interval){
+	private static long getPrevDayMillis(int interval){
 		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(System.currentTimeMillis() - DAY*interval);
+		cal.setTimeInMillis(System.currentTimeMillis() - DAY * interval);
 		cal.set(Calendar.HOUR, -12);
 		cal.set(Calendar.MINUTE, 0);
 		cal.set(Calendar.SECOND, 0);
@@ -41,7 +41,8 @@ public class DateUtil {
 	public static void main(String args[]){
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");		
 		System.out.println(sdf.format(new Date(System.currentTimeMillis())));
-		System.out.println(sdf.format(DateUtil.getPrevDay(5)));
-		
+		System.out.println(sdf.format(DateUtil.getPrevDayTimestamp(5)));
+
+
 	}
 }

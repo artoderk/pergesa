@@ -32,10 +32,10 @@ public interface EventStorage {
      * 事务恢复任务使用的查询SQL
      *
      * @param systemId
-     * @param tag
+     * @param tags
      * @param date
      * @return
      */
-    List<EventInfo> findSince(String systemId, Integer[] tag, Timestamp date);
+    List<EventInfo> findSince(String systemId, List<Integer> tags, Timestamp date);
 
 }

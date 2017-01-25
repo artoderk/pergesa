@@ -33,14 +33,13 @@ public class EventRecoveryServiceImpl implements EventRecoveryService {
     private String systemId;
 
     @Override
-    public List<EventInfo> fetchData(List<Integer> tag) {
+    public List<EventInfo> fetchData(List<Integer> tags) {
         // 默认恢复7天前的数据
-        Timestamp searchDate = DateUtil.getPrevSecTimestamp(day);
+        Timestamp searchDate = DateUtil.getPrevDayTimestamp(day);
 
         // id 升序
         // TODO 分页处理, 一次取1000条
-        return eventStorage.findSince(systemId, tag.toArray(new Integer[tag.size()]),
-                searchDate);
+        return eventStorage.findSince(systemId, tags, searchDate);
     }
 
     public int execute(List<EventInfo> infos) {

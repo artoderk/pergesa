@@ -1,6 +1,5 @@
 package com.arto.kafka.consumer.strategy;
 
-import com.arto.core.common.MessageRecord;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -17,6 +16,6 @@ public interface KConsumerStrategy {
      * @param config
      * @param record
      */
-    void onMessage(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record);
+    void onMessage(final KafkaConsumerConfig config, final ConsumerRecord<String, String> record);
 
 }

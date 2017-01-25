@@ -56,7 +56,7 @@ public class KMessageListenerProxyFactory {
         // Class append
         ClassPool pool = new ClassPool(true);
         pool.appendClassPath(new LoaderClassPath(getClassloader()));
-        CtClass cc = pool.makeClass(className + "Listener_" + "Stub");
+        CtClass cc = pool.makeClass(className + "_Listener_" + "Stub");
         cc.addInterface(pool.get(KMessageListenerProxy.class.getName()));
 
         // Append single mehtod

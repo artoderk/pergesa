@@ -1,6 +1,5 @@
 package com.arto.kafka.consumer;
 
-import com.arto.core.common.MessageRecord;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.consumer.strategy.KConsumerStrategyFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -23,16 +22,16 @@ import java.util.concurrent.Callable;
 public class KafkaConsumerThread implements Callable{
 
     /** Kafka消费者 */
-    private KafkaConsumer<String, MessageRecord> consumer;
+    private KafkaConsumer<String, String> consumer;
 
     /** Topic消费者配置 */
     private KafkaConsumerConfig config;
 
     /** Topic拉取的消息(单个分区) */
-    private List<ConsumerRecord<String, MessageRecord>> records;
+    private List<ConsumerRecord<String, String>> records;
 
-    public KafkaConsumerThread(final KafkaConsumer<String, MessageRecord> consumer, final KafkaConsumerConfig config
-            , final List<ConsumerRecord<String, MessageRecord>> records) {
+    public KafkaConsumerThread(final KafkaConsumer<String, String> consumer, final KafkaConsumerConfig config
+            , final List<ConsumerRecord<String, String>> records) {
         this.consumer = consumer;
         this.config = config;
         this.records = records;
@@ -42,7 +41,7 @@ public class KafkaConsumerThread implements Callable{
     public Object call() throws Exception {
         TopicPartition topicPartition = new TopicPartition(records.get(0).topic(), records.get(0).partition());
 
-        for (ConsumerRecord<String, MessageRecord> record : records) {
+        for (ConsumerRecord<String, String> record : records) {
             log.info("consume message record:" + record);
             // 处理消息
             KConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);

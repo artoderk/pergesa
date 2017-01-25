@@ -1,10 +1,11 @@
 package com.arto.kafka.listener;
 
+import com.alibaba.fastjson.JSON;
+import com.arto.core.common.MessageRecord;
+import com.arto.event.util.TypeReferenceUtil;
 import com.arto.event.build.EventListener;
 import com.arto.event.service.EventAdviceService;
 import com.arto.kafka.common.Constants;
-import com.arto.kafka.consumer.KMessageListenerProxy;
-import com.arto.kafka.consumer.KMessageListenerProxyFactory;
 import com.arto.kafka.consumer.KafkaMessageConsumer;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.event.KafkaConsumeEvent;
@@ -50,14 +51,15 @@ public class KafkaConsumeEventListener implements EventListener<KafkaConsumeEven
         return Constants.K_CONSUME;
     }
 
-    private void onMessage(KafkaConsumeEvent event) {
+    private void onMessage(KafkaConsumeEvent event) throws Throwable {
+        // 获取主题的配置
         KafkaConsumerConfig config = consumer.getConfig(event.getDestination());
-        try {
-            KMessageListenerProxy proxy = KMessageListenerProxyFactory.getProxy(config.getListener(), config.getType());
-            proxy.onMessage(config.getListener(), config.getType(), event.getPayload());
-        } catch (Throwable throwable) {
-            // TODO
-            throwable.printStackTrace();
-        }
+        // 反序列化消息
+        MessageRecord message = JSON.parseObject(event.getPayload()
+                , TypeReferenceUtil.getType(config.getListener()));
+        // 设置消息ID
+        message.setMessageId(event.getBusinessId());
+        // 消费消息
+        config.getListener().onMessage(message);
     }
 }

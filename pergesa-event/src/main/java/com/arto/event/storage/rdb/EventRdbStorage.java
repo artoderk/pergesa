@@ -4,6 +4,7 @@ import com.arto.event.common.Constants;
 import com.arto.event.common.EventStatusEnum;
 import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
+import com.arto.event.util.StringUtil;
 import com.google.common.base.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
@@ -26,18 +27,19 @@ import java.util.Map;
 @Repository
 public class EventRdbStorage implements EventStorage {
 
-	private static final String EVENT_SQL = "SELECT ID, TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, STATUS, PAYLOAD, " +
-			"RETRIED_COUNT_D, RETRIED_COUNT_C, NEXT_RETRY_TIME, MEMO, GMT_CREATED, GMT_MODIFIED" +
-			"FROM EVENT_STORAGE E ";
+	private static final String EVENT_SQL = " SELECT ID, TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, " +
+			" EVENT_TYPE, STATUS, PAYLOAD, RETRIED_COUNT_D, RETRIED_COUNT_C, " +
+			" NEXT_RETRY_TIME, MEMO, GMT_CREATED, GMT_MODIFIED " +
+			" FROM EVENT_STORAGE E ";
 
     @Autowired
 	private NamedParameterJdbcTemplate npJdbcTemplate;
 
 	@Override
 	public int create(EventInfo eventInfo) throws SQLException {
-		String sql = ("INSERT INTO EVENT_STORAGE(TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, "
-				+ "EVENT_TYPE, STATUS, PAYLOAD, RETRIED_COUNT_D, GMT_CREATED, GMT_MODIFIED) VALUES ("
-				+ ":tag, :systemId, :businessId, :businessType, :eventType, :status, :payload, :defaultRetriedCount,"
+		String sql = (" INSERT INTO EVENT_STORAGE(TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, "
+				+ " EVENT_TYPE, STATUS, PAYLOAD, RETRIED_COUNT_D, GMT_CREATED, GMT_MODIFIED) VALUES ("
+				+ " :tag, :systemId, :businessId, :businessType, :eventType, :status, :payload, :defaultRetriedCount,"
 				+ Constants.PG_DATE_SQL + "," + Constants.PG_DATE_SQL + " )");
 		return npJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(eventInfo));
 	}
@@ -122,26 +124,24 @@ public class EventRdbStorage implements EventStorage {
 	}
 
 	@Override
-	public List<EventInfo> findSince(String systemId, Integer[] tag, Timestamp date) {
+	public List<EventInfo> findSince(String systemId, List<Integer> tags, Timestamp date) {
 		StringBuilder builder = new StringBuilder();
 
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId");
-		builder.append(" AND TAG IN (: tag)" );
-		builder.append(" AND GMT_MODIFIED > :currentDate ");
+		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
 		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
 		builder.append(" AND NEXT_RETRY_TIME IS NULL ");
 		builder.append(" UNION ALL ");
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId" );
-		builder.append(" AND TAG IN (:tag)" );
+		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
 		builder.append(" AND GMT_MODIFIED > :currentDate");
 		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
 		builder.append(" AND NEXT_RETRY_TIME IS NOT NULL AND NEXT_RETRY_TIME < :maxRecoveryDate");
 
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("systemId", systemId);
-		paramMap.put("tag", tag);
 		paramMap.put("currentDate", new Timestamp(System.currentTimeMillis()));
 		paramMap.put("maxRecoveryDate", date);
 

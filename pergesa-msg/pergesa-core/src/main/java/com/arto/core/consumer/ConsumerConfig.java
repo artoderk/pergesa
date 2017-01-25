@@ -13,8 +13,9 @@ import lombok.ToString;
 @ToString
 public class ConsumerConfig extends MqConfig{
 
-    /** 消息类型序列化类型 */
-    private Class clz;
+    /** 消息类型反序列化类 */
+    @Deprecated
+    private Class deserializer;
 
     /** 消息处理类 */
     private MqListener listener;

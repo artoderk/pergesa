@@ -3,6 +3,7 @@ package com.arto.event.router;
 import com.arto.event.storage.EventInfo;
 import com.google.common.base.Strings;
 import javassist.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -12,6 +13,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * Created by xiong.j on 2017/1/5.
  */
+@Slf4j
 public class PersistentEventRouterFactory {
 
     private static final ConcurrentMap<String, Class<?>> CLASSES = new ConcurrentHashMap<String, Class<?>>();
@@ -61,14 +63,16 @@ public class PersistentEventRouterFactory {
 
         // Append single mehtod
         StringBuilder sb = new StringBuilder();
-        sb.append("public void router").append("(com.arto.domain.EventInfo eventInfo) throws Throwable { ");
+        sb.append("public void router").append("(com.arto.event.storage.EventInfo eventInfo) throws Throwable { ");
         sb.append(eventInfo.getEventType()).append(" event = (").append(eventInfo.getEventType())
-                .append(")(com.alibaba.fastjson.JSON.parseObject(eventInfo.payload, ")
+                .append(")(com.alibaba.fastjson.JSON.parseObject(eventInfo.getPayload(), ")
                 .append(eventInfo.getEventType()).append(".class)); ");
         sb.append(" com.arto.event.build.EventContext eventContext = new com.arto.event.build.EventContext(eventInfo);");
-        sb.append(" com.arto.event.build.EventBusFactory.post(event); }");
-        // System.out.println(sb.toString());
-        CtMethod mthd = CtNewMethod.make(sb.toString(),cc);
+        sb.append(" com.arto.event.build.EventBusFactory.getInstance().post(event); }");
+
+        String methodStr = sb.toString();
+        log.info("Create method source:" + methodStr);
+        CtMethod mthd = CtNewMethod.make(methodStr, cc);
         cc.addMethod(mthd);
         sb.setLength(0);
 

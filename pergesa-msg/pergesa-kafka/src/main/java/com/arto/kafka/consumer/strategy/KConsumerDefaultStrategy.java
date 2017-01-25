@@ -2,6 +2,8 @@ package com.arto.kafka.consumer.strategy;
 
 import com.alibaba.fastjson.JSON;
 import com.arto.core.common.MessageRecord;
+import com.arto.core.consumer.MqListener;
+import com.arto.event.util.TypeReferenceUtil;
 import com.arto.event.build.Event;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
@@ -30,64 +32,73 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
     }
 
     @Override
-    public void onMessage(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record) {
+    public void onMessage(final KafkaConsumerConfig config, final ConsumerRecord<String, String> record) {
         tryConsume(config, record);
     }
 
-    private void tryConsume(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record) {
-        boolean errFlag = false;
+    private void tryConsume(final KafkaConsumerConfig config, final ConsumerRecord<String, String> record) {
         // 如果出错，重试消费3次
         for (int i = 1; i <= 3; i++) {
+            MessageRecord message = null;
             try {
                 // 生成消息ID
-                record.value().setMessageId(buildMessageId(record));
+                message = buildMessage(config.getListener(), record.value());
+                message.setMessageId(buildMessageId(record));
                 // 消费消息
-                config.getListener().onMessage(record.value());
-            } catch (Exception e) {
-                errFlag = true;
-                log.warn("Kafka receive message failed, waiting for retry. record=" + record, e);
+                config.getListener().onMessage(message);
+                break;
+            } catch (Throwable e) {
+                log.warn("Receive message failed, waiting for retry. record=" + record, e);
                 if (i == 3) {
-                    infiniteRetry(config, record);
+                    infiniteRetry(record, message);
                 } else {
                     // 消息处理错误，暂停处理一小会
                     ThreadUtil.sleep(10000, Thread.currentThread(), log);
                 }
             }
-            // 消费成功则退出循环
-            if (!errFlag) {
-                break;
-            }
         }
     }
 
-    private void infiniteRetry(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record) {
+    private void infiniteRetry(final ConsumerRecord<String, String> record, MessageRecord message) {
         // 转换为事件
-        Event event = buildEvent(config, record);
+        Event event = buildEvent(record, message);
         // 无限重试直到持久化成功
         while (true){
             try {
                 service.persist(event, Constants.K_CONSUME_EVENT_BEAN);
                 break;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.warn("Persist message failed, waiting for retry. record=" + record, e);
             }
             // 持久化消息错误，暂停处理一小会
             ThreadUtil.sleep(10000, Thread.currentThread(), log);
         }
-        log.debug("Kafka receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
+        log.info("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
     }
 
-    private Event buildEvent(final KafkaConsumerConfig config, final ConsumerRecord<String, MessageRecord> record){
+    private MessageRecord buildMessage(MqListener listener, String payload) throws Throwable {
+        // 反序列化消息
+        MessageRecord message = JSON.parseObject(payload, TypeReferenceUtil.getType(listener));
+        return message;
+    }
+
+    private Event buildEvent(final ConsumerRecord<String, String> record, MessageRecord message){
         // 生成事件
         KafkaConsumeEvent event = new KafkaConsumeEvent();
         // 事件分组
         event.setGroup(com.arto.core.common.Constants.MQ);
-        // 业务流水号
-        event.setBusinessId(record.value().getMessageId());
+        // 业务流水号设为消息ID
+        if (message == null) {
+            event.setBusinessId(buildMessageId(record));
+        } else {
+            event.setBusinessId(message.getMessageId());
+        }
         // 业务类型
         event.setBusinessType(Constants.K_CONSUME);
         // 消息
-        event.setPayload(JSON.toJSONString(record.value()));
+        event.setPayload(record.value());
+        // 重试次数
+        event.setRetry(3);
         return event;
     }
 

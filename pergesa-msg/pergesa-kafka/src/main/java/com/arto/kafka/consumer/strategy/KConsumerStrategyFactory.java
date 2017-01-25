@@ -37,34 +37,37 @@ public class KConsumerStrategyFactory {
      */
     public KConsumerStrategy getStrategy(final int priority){
         if (strategyMap.containsKey(priority)) {
-            return strategyMap.get(priority).get();
-        } else {
-            return createStrategy(priority);
+            if (strategyMap.get(priority) != null) {
+                return strategyMap.get(priority).get();
+            }
         }
+        return createStrategy(priority);
     }
 
     private KConsumerStrategy createStrategy(final int priority) {
         if (strategyMap.containsKey(priority)) {
-            return strategyMap.get(priority).get();
-        } else {
-            KConsumerStrategy strategy;
-            switch (priority) {
-                case 1:
-                    // 重要消息，不能容忍消息丢失
-                    strategy = new KConsumerDefaultStrategy();
-                    break;
+            if (strategyMap.get(priority) != null) {
+                return strategyMap.get(priority).get();
+            }
+        }
+
+        KConsumerStrategy strategy;
+        switch (priority) {
+            case 1:
+                // 重要消息，不能容忍消息丢失
+                strategy = new KConsumerDefaultStrategy();
+                break;
 //                case 2:
 //                    // TODO 其它消费优先级待实现
 //                    break;
 //                case 3:
 //                    // 不重要消息，可容忍消息丢失
 //                    break;
-                default:
-                    strategy = new KConsumerDefaultStrategy();
-            }
-            strategyMap.put(priority, new SoftReference<KConsumerStrategy>(strategy));
-            return strategy;
+            default:
+                strategy = new KConsumerDefaultStrategy();
         }
+        strategyMap.put(priority, new SoftReference<KConsumerStrategy>(strategy));
+        return strategy;
     }
 
 }

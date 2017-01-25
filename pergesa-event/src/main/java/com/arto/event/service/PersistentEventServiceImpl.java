@@ -176,6 +176,8 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         info.setBusinessType(event.getBusinessType());
         // 事件类型
         info.setEventType(type);
+        // 事件状态
+        info.setStatus(EventStatusEnum.PROCESSING.getCode());
         // 事件内容
         info.setPayload(event.getPayload());
         // 重试次数
