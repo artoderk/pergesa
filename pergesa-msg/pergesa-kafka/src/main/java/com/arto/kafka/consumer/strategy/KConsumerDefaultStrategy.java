@@ -36,6 +36,7 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
         tryConsume(config, record);
     }
 
+    @SuppressWarnings("unchecked")
     private void tryConsume(final KafkaConsumerConfig config, final ConsumerRecord<String, String> record) {
         // 如果出错，重试消费3次
         for (int i = 1; i <= 3; i++) {
@@ -59,7 +60,8 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
         }
     }
 
-    private void infiniteRetry(final ConsumerRecord<String, String> record, MessageRecord message) {
+    private void infiniteRetry(final ConsumerRecord<String, String> record
+            , MessageRecord message) {
         // 转换为事件
         Event event = buildEvent(record, message);
         // 无限重试直到持久化成功
@@ -86,7 +88,7 @@ public class KConsumerDefaultStrategy implements KConsumerStrategy {
         // 生成事件
         KafkaConsumeEvent event = new KafkaConsumeEvent();
         // 事件分组
-        event.setGroup(com.arto.core.common.Constants.MQ);
+        event.setGroup(KafkaConsumeEvent.class);
         // 业务流水号设为消息ID
         if (message == null) {
             event.setBusinessId(buildMessageId(record));

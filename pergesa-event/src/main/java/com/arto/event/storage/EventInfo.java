@@ -43,7 +43,7 @@ public class EventInfo {
     private int defaultRetriedCount = -1;
 
     /** 当前重试次数 */
-    private int currentRetriedCount = -1;
+    private int currentRetriedCount;
 
     /** 备注 */
     private String memo;

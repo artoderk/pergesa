@@ -17,9 +17,8 @@ public interface Constants {
     /** 消息中间件kafka发送消息事件类 */
     String KAFKA_EVENT_BEAN = KafkaEvent.class.getName();
 
-
     /** 消息中间件kafka消费消息标识 */
-    String K_CONSUME = "KConsume";
+    String K_CONSUME = "K02";
 
     /** 消息中间件kafka消费消息事件类 */
     String K_CONSUME_EVENT_BEAN = KafkaConsumeEvent.class.getName();

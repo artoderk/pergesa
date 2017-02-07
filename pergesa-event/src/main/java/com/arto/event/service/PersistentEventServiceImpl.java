@@ -144,7 +144,8 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             // 设置有重试次数时
             updInfo.setNextRetryTime(getNextRetryTime(eventInfo.getCurrentRetriedCount()));
         }
-        update(eventInfo);
+        // 更新重试信息
+        update(updInfo);
     }
 
     private void update(EventInfo updInfo) {

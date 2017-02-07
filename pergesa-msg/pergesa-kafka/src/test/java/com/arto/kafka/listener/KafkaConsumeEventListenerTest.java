@@ -50,7 +50,7 @@ public class KafkaConsumeEventListenerTest {
 
         KafkaConsumeEvent event = new KafkaConsumeEvent();
         event.setPayload(JSON.toJSONString(record));
-        event.setGroup("Kafka");
+//        event.setGroup("Kafka");
         event.setDestination("topic1");
 
         System.out.println(JSON.toJSONString(event));

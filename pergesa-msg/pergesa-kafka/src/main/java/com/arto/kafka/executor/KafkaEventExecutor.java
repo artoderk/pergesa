@@ -1,7 +1,8 @@
 package com.arto.kafka.executor;
 
-import com.arto.core.common.Constants;
 import com.arto.event.build.EventBusFactory;
+import com.arto.kafka.event.KafkaConsumeEvent;
+import com.arto.kafka.event.KafkaEvent;
 import com.arto.kafka.listener.KafkaConsumeEventListener;
 import com.arto.kafka.listener.KafkaEventListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class KafkaEventExecutor {
     @PostConstruct
     public void init() throws Exception {
         // 注册事件
-        EventBusFactory.getInstance().register(Constants.MQ, kafkaEventListener);
-        EventBusFactory.getInstance().register(Constants.MQ, kafkaConsumeEventListener);
+        EventBusFactory.getInstance().register(KafkaEvent.class, kafkaEventListener);
+        EventBusFactory.getInstance().register(KafkaConsumeEvent.class, kafkaConsumeEventListener);
     }
 }

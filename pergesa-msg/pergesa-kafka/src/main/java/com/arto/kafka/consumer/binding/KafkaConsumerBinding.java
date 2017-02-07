@@ -148,6 +148,7 @@ public class KafkaConsumerBinding implements MqConsumer {
          */
         public void destroy() {
             executor.shutdown();
+            log.info("Kafka Consumer thread pool is destroyed. topic=" + config.getDestination());
         }
     }
 }

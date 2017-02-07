@@ -11,7 +11,6 @@ import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +33,7 @@ public class KafkaMessageConsumer {
     private KafkaMessageConsumerFactory factory;
 
     /** 消息拉取线程 */
-    private PollThread pollThread;
+    private volatile PollThread pollThread;
 
     /** 消息拉取线程关闭Flag */
     private final AtomicBoolean closeFlag = new AtomicBoolean(false);
@@ -45,7 +44,6 @@ public class KafkaMessageConsumer {
     /**
      * 初始化
      */
-    @PostConstruct
     public void init(){
         try {
             pollThread = new PollThread(factory.getConsumer());
@@ -53,7 +51,6 @@ public class KafkaMessageConsumer {
         } catch (Exception e) {
             log.error("kafka consumer init failed.");
         }
-
     }
 
     /**
@@ -62,6 +59,13 @@ public class KafkaMessageConsumer {
      * @param kafkaConsumerBinding
      */
     public void subscribe(final KafkaConsumerBinding kafkaConsumerBinding) {
+        if (pollThread == null) {
+            synchronized (this){
+                if (pollThread == null) {
+                    init();
+                }
+            }
+        }
         bindingMap.put(kafkaConsumerBinding.getConfig().getDestination(), kafkaConsumerBinding);
         pollThread.subscribe(kafkaConsumerBinding);
     }
@@ -71,6 +75,7 @@ public class KafkaMessageConsumer {
      */
     @PreDestroy
     public void destroy(){
+        log.info("Kafka Consumer poll thread is destroyed.");
         closeFlag.set(true);
         for(Map.Entry<String, KafkaConsumerBinding> entry : bindingMap.entrySet()){
             entry.getValue().close();

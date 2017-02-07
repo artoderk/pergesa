@@ -13,7 +13,7 @@ import lombok.ToString;
 public class Event {
 
     /** 事件分组 */
-    private String group;
+    private Class group;
 
     /** 业务凭证流水号 */
     private String businessId;

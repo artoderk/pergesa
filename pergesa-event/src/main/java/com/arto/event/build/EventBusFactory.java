@@ -64,21 +64,11 @@ public final class EventBusFactory {
      * @param group    作业名
      * @param listener 作业事件
      */
-    public synchronized void register(final String group, final EventListener listener) {
-        if (!itemMap.containsKey(group)) {
-            itemMap.putIfAbsent(group, new EventBusInstance());
+    public synchronized void register(final Class group, final EventListener listener) {
+        if (!itemMap.containsKey(group.getName())) {
+            itemMap.putIfAbsent(group.getName(), new EventBusInstance());
         }
-        itemMap.get(group).register(listener);
-    }
-
-
-    /**
-     * 注册事件监听器.
-     *
-     * @param listener 作业事件
-     */
-    public synchronized void register(final EventListener listener) {
-        register(DEFAULT_GROUP, listener);
+        itemMap.get(group.getName()).register(listener);
     }
 
     /**
@@ -87,7 +77,7 @@ public final class EventBusFactory {
      * @param event 事件
      */
     public void post(final Event event) {
-        String group = event.getGroup();
+        String group = event.getClass().getName();
         if (itemMap.containsKey(group)) {
             itemMap.get(group).post(event);
         } else {

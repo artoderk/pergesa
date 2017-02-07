@@ -34,7 +34,7 @@ public class EventBusFactoryTest {
      */
     @Test
     public void testGetInstance() throws Exception {
-        EventBusFactory.getInstance().register("jdbc", new EventListener<Event>() {
+        EventBusFactory.getInstance().register(Event.class, new EventListener<Event>() {
             @Override
             public void listen(Event traceEvent) {
                 System.out.println("Thread:" + Thread.currentThread().getId() + ", This is event:" + traceEvent.toString());
@@ -52,7 +52,6 @@ public class EventBusFactoryTest {
                 @Override
                 public void run() {
                     Event e = new Event();
-                    e.setGroup("jdbc");
                     e.setPayload("testEvent");
                     System.out.println("Thread:" + Thread.currentThread().getId() + ", post event:" + e.toString());
                     EventBusFactory.getInstance().post(e);
@@ -105,7 +104,7 @@ public class EventBusFactoryTest {
 
     public static void main(String args[]) {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
-        EventBusFactory.getInstance().register("jdbc", new EventListener<Event>() {
+        EventBusFactory.getInstance().register(Event.class, new EventListener<Event>() {
             @Override
             public void listen(Event traceEvent) {
                 System.out.println("Thread:" + Thread.currentThread().getId() + ", This is event:" + traceEvent.toString());
@@ -135,7 +134,6 @@ class Executor implements Runnable{
     @Override
     public void run() {
         Event e = new Event();
-        e.setGroup("jdbc");
         e.setPayload("testEvent" + i);
         if (i == 2) {
             try {

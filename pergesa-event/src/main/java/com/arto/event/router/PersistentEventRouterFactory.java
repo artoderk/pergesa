@@ -58,16 +58,20 @@ public class PersistentEventRouterFactory {
         // Class append
         ClassPool pool = new ClassPool(true);
         pool.appendClassPath(new LoaderClassPath(getClassloader()));
-        CtClass cc = pool.makeClass(className + "Event_" + "Stub");
+        CtClass cc = pool.makeClass(className + "_RouterStub");
         cc.addInterface(pool.get(PersistentEventRouter.class.getName()));
 
         // Append single mehtod
         StringBuilder sb = new StringBuilder();
         sb.append("public void router").append("(com.arto.event.storage.EventInfo eventInfo) throws Throwable { ");
+        // 根据持久化消息体反序列化成事件
         sb.append(eventInfo.getEventType()).append(" event = (").append(eventInfo.getEventType())
                 .append(")(com.alibaba.fastjson.JSON.parseObject(eventInfo.getPayload(), ")
                 .append(eventInfo.getEventType()).append(".class)); ");
+        // 加入持久化属性
         sb.append(" com.arto.event.build.EventContext eventContext = new com.arto.event.build.EventContext(eventInfo);");
+        sb.append(" event.setEventContext(eventContext);");
+        // 发送事件
         sb.append(" com.arto.event.build.EventBusFactory.getInstance().post(event); }");
 
         String methodStr = sb.toString();

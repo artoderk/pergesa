@@ -67,6 +67,7 @@ public class KafkaProducerBinding implements MqProducer {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private KMessageRecord buildMessage(String key, int partition, Object message){
         KMessageRecord record = new KMessageRecord();
         // Hash主键
@@ -83,7 +84,7 @@ public class KafkaProducerBinding implements MqProducer {
     private KafkaEvent buildEvent(KMessageRecord record){
         KafkaEvent event = new KafkaEvent();
         // 事件分组
-        event.setGroup(com.arto.core.common.Constants.MQ);
+        //event.setGroup(com.arto.core.common.Constants.MQ);
         // 业务流水号
         event.setBusinessId(record.getBusinessId());
         // 业务类型

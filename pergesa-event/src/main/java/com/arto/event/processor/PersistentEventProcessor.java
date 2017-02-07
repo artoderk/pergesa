@@ -29,11 +29,11 @@ public class PersistentEventProcessor {
         try{
 
             //eventQueue.add(eventInfo2PersistenEvent(eventInfo));
-
-            // TODO 静态代理 根据event类型生成对应的代理，发送到eventBus
+            // TODO event.group的设定
             PersistentEventRouter proxy = PersistentEventRouterFactory.getProxy(eventInfo);
             proxy.router(eventInfo);
         } catch (Throwable e) {
+            // TODO 错误处理流程，参照事件出错处理
             log.error("Router event failed. ", e);
         }
         return true;

@@ -51,8 +51,8 @@ public class EventRdbStorage implements EventStorage {
 		if (eventInfo.getStatus() != -1) {
 			builder.append(" STATUS = :status, ");
 		}
-		if (eventInfo.getCurrentRetriedCount() != -1) {
-			builder.append(" RETRIED_COUNT_C = :retriedCountC, ");
+		if (eventInfo.getStatus() != 0) {
+			builder.append(" RETRIED_COUNT_C = :currentRetriedCount, ");
 		}
 		if (eventInfo.getNextRetryTime() != null) {
 			builder.append(" NEXT_RETRY_TIME = :nextRetryTime, ");
@@ -69,8 +69,8 @@ public class EventRdbStorage implements EventStorage {
 		if (eventInfo.getStatus() != -1) {
 			builder.append(" STATUS = :status, ");
 		}
-		if (eventInfo.getCurrentRetriedCount() != -1) {
-			builder.append(" RETRIED_COUNT_C = :retriedCountC, ");
+		if (eventInfo.getStatus() != 0) {
+			builder.append(" RETRIED_COUNT_C = :currentRetriedCount, ");
 		}
 		if (eventInfo.getNextRetryTime() != null) {
 			builder.append(" NEXT_RETRY_TIME = :nextRetryTime, ");
@@ -136,9 +136,9 @@ public class EventRdbStorage implements EventStorage {
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId" );
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
-		builder.append(" AND GMT_MODIFIED > :currentDate");
+		builder.append(" AND GMT_MODIFIED > :maxRecoveryDate");
 		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
-		builder.append(" AND NEXT_RETRY_TIME IS NOT NULL AND NEXT_RETRY_TIME < :maxRecoveryDate");
+		builder.append(" AND NEXT_RETRY_TIME IS NOT NULL AND NEXT_RETRY_TIME < :currentDate");
 
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("systemId", systemId);

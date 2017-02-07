@@ -15,7 +15,7 @@ public class EventTest {
 
     @Test
     public void sendEvent(){
-        EventBusFactory.getInstance().register("test1", new EventListener<TestBeanEvent1>() {
+        EventBusFactory.getInstance().register(TestBeanEvent1.class, new EventListener<TestBeanEvent1>() {
             @Override
             @Subscribe
             @AllowConcurrentEvents
@@ -29,9 +29,9 @@ public class EventTest {
             }
         });
 
-        EventBusFactory.getInstance().post(new TestBeanEvent1(1, "TestBeanEvent1", "test1"));
+        EventBusFactory.getInstance().post(new TestBeanEvent1(1, "TestBeanEvent1"));
 
-        EventBusFactory.getInstance().post(new TestBeanEvent2(1, "TestBeanEvent2", "test1"));
+        EventBusFactory.getInstance().post(new TestBeanEvent2(1, "TestBeanEvent2"));
     }
 
     @Test
@@ -40,9 +40,9 @@ public class EventTest {
         eventBus.register(new EventListener1());
         eventBus.register(new EventListener2());
 
-        eventBus.post(new TestBeanEvent1(1, "TestBeanEvent1", "test1"));
+        eventBus.post(new TestBeanEvent1(1, "TestBeanEvent1"));
 
-        eventBus.post(new TestBeanEvent2(1, "TestBeanEvent2", "test1"));
+        eventBus.post(new TestBeanEvent2(1, "TestBeanEvent2"));
     }
 
     private static class EventListener1 implements EventListener<TestBeanEvent1>{
@@ -73,10 +73,9 @@ public class EventTest {
         int id;
         String name;
 
-        public TestBeanEvent1(int id, String name, String group) {
+        public TestBeanEvent1(int id, String name) {
             this.id = id;
             this.name = name;
-            this.setGroup(group);
         }
 
         public int getId() {
@@ -100,10 +99,9 @@ public class EventTest {
         int id;
         String name;
 
-        public TestBeanEvent2(int id, String name, String group) {
+        public TestBeanEvent2(int id, String name) {
             this.id = id;
             this.name = name;
-            this.setGroup(group);
         }
 
         public int getId() {
