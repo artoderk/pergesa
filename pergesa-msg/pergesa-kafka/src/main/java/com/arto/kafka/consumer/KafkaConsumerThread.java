@@ -39,10 +39,13 @@ public class KafkaConsumerThread implements Callable{
 
     @Override
     public Object call() throws Exception {
-        TopicPartition topicPartition = new TopicPartition(records.get(0).topic(), records.get(0).partition());
+        TopicPartition topicPartition = null;
 
         for (ConsumerRecord<String, String> record : records) {
             log.info("consume message record:" + record);
+            if (topicPartition == null) {
+                topicPartition = new TopicPartition(record.topic(), record.partition());
+            }
             // 处理消息
             KConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
             // 提交消费标识 TODO 根据优先级处理消息标识与重试
@@ -61,6 +64,6 @@ public class KafkaConsumerThread implements Callable{
 
     private void commitAsync(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
         Map<TopicPartition, OffsetAndMetadata> offsets = Collections.singletonMap(topicPartition, offsetAndMetadata);
-        consumer.commitSync(offsets);
+        consumer.commitAsync(offsets, null);
     }
 }

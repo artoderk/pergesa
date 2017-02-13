@@ -2,13 +2,13 @@ package com.arto.event.service;
 
 import com.arto.event.build.Event;
 import com.arto.event.common.EventStatusEnum;
-import com.arto.event.storage.EventInfo;
+import com.arto.event.config.ConfigManager;
 import com.arto.event.exception.PersistentEventLockException;
+import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
 import com.arto.event.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -20,26 +20,6 @@ import java.util.Random;
 @Slf4j
 @Service("persistentEventService")
 public class PersistentEventServiceImpl implements PersistentEventService {
-
-    /** 无限次重试时的重试间隔为5分钟 */
-    @Value("${kafka.retry.interval:300}")
-    private int retryInterval;
-
-    /** 处理持久化消息时，默认采用悲观锁 */
-    @Value("${event.persistent.lock.optimistic:false}")
-    private boolean lockOptimistic;
-
-    /** 系统名 */
-    @Value("${sar.name:webapp}")
-    private String systemId;
-
-    /** 事件分片数 */
-    @Value("${event.storage.tag:10}")
-    private int tag;
-
-    /** 默认重试次数 */
-    @Value("${event.retry.times:5}")
-    private int defaultRetry;
 
     /** 事件持久化操作 */
     @Autowired
@@ -69,7 +49,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
      */
     @Override
     public EventInfo lock(EventInfo eventInfo) throws Exception {
-        if (lockOptimistic) {
+        if (ConfigManager.getBoolean("event.persistent.lock.optimistic", false)) {
             // 乐观锁直接返回
             return null;
         } else {
@@ -138,8 +118,8 @@ public class PersistentEventServiceImpl implements PersistentEventService {
 
         updInfo.setCurrentRetriedCount(eventInfo.getCurrentRetriedCount() + 1);
         if (eventInfo.getDefaultRetriedCount() == -1) {
-            // 无限重试时
-            updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(retryInterval));
+            // 无限重试时(默认间隔为10分钟)
+            updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(ConfigManager.getInt("kafka.retry.interval", 600)));
         } else {
             // 设置有重试次数时
             updInfo.setNextRetryTime(getNextRetryTime(eventInfo.getCurrentRetriedCount()));
@@ -149,7 +129,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
     }
 
     private void update(EventInfo updInfo) {
-        if (lockOptimistic) {
+        if (ConfigManager.getBoolean("event.persistent.lock.optimistic", false)) {
             // 采用乐观锁时更新操作
             eventStorage.optimisticUpdate(updInfo);
         } else {
@@ -158,19 +138,12 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         }
     }
 
-    private Timestamp getNextRetryTime(int currentRetriedCount){
-        // 获取下一次重试时间，默认使用重试次数的9次方
-        return new Timestamp(System.currentTimeMillis()
-                + Math.round(Math.pow(9, currentRetriedCount))
-                * 1000);
-    }
-
     private EventInfo event2Info(Event event, String type){
         EventInfo info = new EventInfo();
-        // Tag
-        info.setTag(random.nextInt(10));
+        // Tag(事件分片数)
+        info.setTag(random.nextInt(ConfigManager.getInt("event.storage.tag", 10)));
         // 系统名
-        info.setSystemId(systemId);
+        info.setSystemId(ConfigManager.getString("sar.name", "webapp"));
         // 业务流水号
         info.setBusinessId(event.getBusinessId());
         // 业务类型
@@ -184,10 +157,44 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         // 重试次数
         if (event.isPersistent() && event.getRetry() == 0) {
             // 持久化事件且没有设定重试次数的情况下，使用默认次数
-            info.setDefaultRetriedCount(defaultRetry);
+            info.setDefaultRetriedCount(ConfigManager.getInt("event.retry.times", 5));
         } else {
             info.setDefaultRetriedCount(event.getRetry());
         }
         return info;
+    }
+
+    private Timestamp getNextRetryTime(int currentRetriedCount){
+        long delayMsec = 600 * 1000;;
+        switch (currentRetriedCount){
+            case 1: // 1分钟
+                delayMsec = 60 * 1000;
+                break;
+            case 2: // 10分钟
+                delayMsec = 600 * 1000;
+                break;
+            case 3: // 1小时
+                delayMsec = 3600 * 1000;
+                break;
+            case 4: // 6小时
+                delayMsec = 6 * 3600 * 1000;
+                break;
+            case 5: // 12小时
+                delayMsec = 12 * 3600 * 1000;
+                break;
+            case 6: // 24小时
+                delayMsec = 24 * 3600 * 1000;
+                break;
+            case 7: // 36小时
+                delayMsec = 36 * 3600 * 1000;
+                break;
+        }
+        /*
+            // 获取下一次重试时间，默认使用重试次数的9次方
+            return new Timestamp(System.currentTimeMillis()
+                + Math.round(Math.pow(9, currentRetriedCount))
+                * 1000);
+        */
+        return new Timestamp(System.currentTimeMillis() + delayMsec);
     }
 }

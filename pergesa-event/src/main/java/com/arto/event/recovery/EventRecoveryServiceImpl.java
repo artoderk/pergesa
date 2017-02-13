@@ -1,12 +1,12 @@
 package com.arto.event.recovery;
 
+import com.arto.event.config.ConfigManager;
+import com.arto.event.processor.PersistentEventProcessor;
 import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
-import com.arto.event.processor.PersistentEventProcessor;
 import com.arto.event.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -25,21 +25,14 @@ public class EventRecoveryServiceImpl implements EventRecoveryService {
     @Autowired
     private PersistentEventProcessor persistentEventProcessor;
 
-    @Value("${event.start.day:7}")
-    private int day;
-
-    /** 系统名 */
-    @Value("${sar.name:webapp}")
-    private String systemId;
-
     @Override
     public List<EventInfo> fetchData(List<Integer> tags) {
         // 默认恢复7天前的数据
-        Timestamp searchDate = DateUtil.getPrevDayTimestamp(day);
+        Timestamp searchDate = DateUtil.getPrevDayTimestamp(ConfigManager.getInt("event.start.day", 7));
 
         // id 升序
         // TODO 分页处理, 一次取1000条
-        return eventStorage.findSince(systemId, tags, searchDate);
+        return eventStorage.findSince(ConfigManager.getString("sar.name", "webapp"), tags, searchDate);
     }
 
     public int execute(List<EventInfo> infos) {

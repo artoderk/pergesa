@@ -1,9 +1,10 @@
 package com.arto.kafka.producer;
 
 import com.arto.kafka.common.KAcksEnum;
+import com.arto.kafka.config.KConfigManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.springframework.beans.factory.annotation.Value;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class KafkaMessageProducerFactory {
 
-    @Value("${kafka.servers:172.18.2.192:9092}")
+    /*@Value("${kafka.servers:172.18.2.192:9092}")
     private String servers;
 
     @Value("${kafka.client.id:pergesa-msg}")
@@ -40,7 +41,7 @@ public class KafkaMessageProducerFactory {
     private String keySerializer;
 
     @Value("${kafka.value.serializer:org.apache.kafka.common.serialization.StringSerializer}")
-    private String valueSerializer;
+    private String valueSerializer;*/
 
     private Map<Integer, KafkaProducer<String, String>> producerMap = new ConcurrentHashMap<Integer, KafkaProducer<String, String>>(3);
 
@@ -81,15 +82,26 @@ public class KafkaMessageProducerFactory {
             return producerMap.get(priority);
         }
         Properties props = new Properties();
-        props.put("bootstrap.servers", servers);
-        props.put("client.id", client);
-        props.put("acks", String.valueOf(convert2Ack(priority)));
-        props.put("retries", retries);
-        props.put("batch.size", batchSize);
-        props.put("linger.ms", lingerMs);
-        props.put("buffer.memory", bufferMemory);
-        props.put("key.serializer", keySerializer);
-        props.put("value.serializer", valueSerializer);
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG
+                , KConfigManager.getString(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
+        props.put(ProducerConfig.CLIENT_ID_CONFIG
+                , KConfigManager.getString(ProducerConfig.CLIENT_ID_CONFIG, "pergesa-msg"));
+        props.put(ProducerConfig.ACKS_CONFIG
+                , String.valueOf(convert2Ack(priority)));
+        props.put(ProducerConfig.RETRIES_CONFIG
+                , KConfigManager.getInt(ProducerConfig.RETRIES_CONFIG, 3));
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG
+                , KConfigManager.getInt(ProducerConfig.BATCH_SIZE_CONFIG, 16384));
+        props.put(ProducerConfig.LINGER_MS_CONFIG
+                , KConfigManager.getInt(ProducerConfig.LINGER_MS_CONFIG, 1));
+        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG
+                , KConfigManager.getInt(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432));
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
+                , KConfigManager.getString(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
+                , "org.apache.kafka.common.serialization.StringSerializer"));
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
+                , KConfigManager.getString(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
+                , "org.apache.kafka.common.serialization.StringSerializer"));
 
         prepareEnvironments(priority, props);
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(props);

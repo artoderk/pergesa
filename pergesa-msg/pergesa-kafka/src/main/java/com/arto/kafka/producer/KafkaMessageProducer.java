@@ -1,6 +1,7 @@
 package com.arto.kafka.producer;
 
 import com.arto.core.exception.MqClientException;
+import com.arto.kafka.config.KConfigManager;
 import com.arto.kafka.event.KafkaEvent;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -10,7 +11,6 @@ import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Future;
@@ -27,9 +27,9 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class KafkaMessageProducer {
 
-    /** 同步发送时的超时时间 */
-    @Value("${kafka.producer.timeout:30}")
-    private int timeout;
+//    /** 同步发送时的超时时间 */
+//    @Value("${kafka.producer.timeout:30}")
+//    private int timeout;
 
     /** 生产者工厂 */
     @Autowired
@@ -61,7 +61,8 @@ public class KafkaMessageProducer {
             if (event.getPriority() != 3) {
                 // 同步发送
                 future = factory.getProducer(event.getPriority()).send(producerRecord);
-                RecordMetadata metadata = (RecordMetadata) future.get(timeout, TimeUnit.SECONDS);
+                RecordMetadata metadata = (RecordMetadata) future.get(
+                        KConfigManager.getInt("kafka.producer.timeout", 30), TimeUnit.SECONDS);
                 log.info("Kafka Send to topic:" + event.getDestination() + ", partition" + metadata.partition() + ", message:" + event.getPayload());
             } else {
                 // 异步发送

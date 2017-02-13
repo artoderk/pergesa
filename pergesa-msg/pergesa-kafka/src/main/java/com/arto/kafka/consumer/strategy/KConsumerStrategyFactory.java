@@ -60,9 +60,10 @@ public class KConsumerStrategyFactory {
 //                case 2:
 //                    // TODO 其它消费优先级待实现
 //                    break;
-//                case 3:
-//                    // 不重要消息，可容忍消息丢失
-//                    break;
+            case 3:
+                // 不重要消息，可容忍消息丢失
+                strategy = new KConsumerLowPriorityStrategy();
+                break;
             default:
                 strategy = new KConsumerDefaultStrategy();
         }
