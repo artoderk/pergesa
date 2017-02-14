@@ -1,6 +1,6 @@
 package com.arto.event.service;
 
-import com.arto.event.build.Event;
+import com.arto.event.bootstrap.Event;
 
 /**
  * Created by xiong.j on 2017/1/4.

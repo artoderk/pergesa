@@ -1,8 +1,11 @@
 package com.arto.kafka.producer;
 
+import com.alibaba.fastjson.JSON;
 import com.arto.core.exception.MqClientException;
-import com.arto.kafka.config.KConfigManager;
-import com.arto.kafka.event.KafkaEvent;
+import com.arto.kafka.common.KMessageRecord;
+import com.arto.kafka.common.KUtil;
+import com.arto.kafka.config.KafkaConfigManager;
+import com.arto.kafka.event.KafkaProduceEvent;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,28 +44,30 @@ public class KafkaMessageProducer {
      * @param event
      * @throws MqClientException
      */
-    public void send(final KafkaEvent event) throws MqClientException {
+    public void send(final KafkaProduceEvent event) throws MqClientException {
+        Future future = null;
+        ProducerRecord<String, String> producerRecord = null;
+
         try {
-            log.info("Kafka process event:", event);
-            Future future = null;
-            ProducerRecord producerRecord = null;
+            // 通过JOSN序列化
+            String payload = JSON.toJSONString(event.getPayload());
             if (event.getPartition() == -1) {
                 // 没有设置分区
                 if (Strings.isNullOrEmpty(event.getKey())) {
                     // 没有设置Hash主键
-                    producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getPayload());
+                    producerRecord = new ProducerRecord<String, String>(event.getDestination(), payload);
                 } else {
-                    producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getKey(), event.getPayload());
+                    producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getKey(), payload);
                 }
             } else {
-                producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getPartition(), event.getKey(), event.getPayload());
+                producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getPartition(), event.getKey(), payload);
             }
 
             if (event.getPriority() != 3) {
                 // 同步发送
                 future = factory.getProducer(event.getPriority()).send(producerRecord);
                 RecordMetadata metadata = (RecordMetadata) future.get(
-                        KConfigManager.getInt("kafka.producer.timeout", 30), TimeUnit.SECONDS);
+                        KafkaConfigManager.getInt("kafka.producer.timeout", 30), TimeUnit.SECONDS);
                 log.info("Kafka Send to topic:" + event.getDestination() + ", partition" + metadata.partition() + ", message:" + event.getPayload());
             } else {
                 // 异步发送
@@ -71,6 +76,9 @@ public class KafkaMessageProducer {
                     future = factory.getProducer(event.getPriority()).send(producerRecord, new Callback() {
                         @Override
                         public void onCompletion(RecordMetadata metadata, Exception exception) {
+                            // 设置MessageId
+                            KMessageRecord kMessageRecord = (KMessageRecord)event.getPayload();
+                            kMessageRecord.setMessageId(KUtil.buildMessageId(metadata.partition(), metadata.offset()));
                             event.getCallback().onCompletion(event);
                         }
                     });

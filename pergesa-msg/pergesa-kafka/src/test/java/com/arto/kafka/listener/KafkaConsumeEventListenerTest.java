@@ -1,7 +1,6 @@
 package com.arto.kafka.listener;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.consumer.MqListener;
 import com.arto.kafka.event.KafkaConsumeEvent;
@@ -67,7 +66,7 @@ public class KafkaConsumeEventListenerTest {
             }
         };
 
-        listener.onMessage(JSON.parseObject(event.getPayload(), new TypeReference<MessageRecord<TestMessageBean>>(){}));
+        //listener.onMessage(JSON.parseObject(event.getPayload(), new TypeReference<MessageRecord<TestMessageBean>>(){}));
     }
 
 

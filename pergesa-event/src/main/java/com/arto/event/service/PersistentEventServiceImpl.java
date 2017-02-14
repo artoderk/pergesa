@@ -1,12 +1,15 @@
 package com.arto.event.service;
 
-import com.arto.event.build.Event;
+import com.alibaba.fastjson.JSON;
+import com.arto.event.bootstrap.Event;
 import com.arto.event.common.EventStatusEnum;
 import com.arto.event.config.ConfigManager;
+import com.arto.event.exception.EventException;
 import com.arto.event.exception.PersistentEventLockException;
 import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
 import com.arto.event.util.DateUtil;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
     @Autowired
     private EventStorage eventStorage;
 
-    /** 随机数生成器，用来分隔Tag*/
+    /** 随机数生成器，用来分隔Tag */
     private Random random = new Random();
 
     /**
@@ -36,8 +39,19 @@ public class PersistentEventServiceImpl implements PersistentEventService {
      * @throws
      */
     @Override
-    public void persist(Event event, String type) throws Exception {
-        eventStorage.create(event2Info(event, type));
+    public void persist(Event event, String type) throws EventException {
+        if (Strings.isNullOrEmpty(event.getBusinessId()) || Strings.isNullOrEmpty(event.getBusinessType())) {
+            throw new EventException("'businessId' and 'businessType' can't be null or blank.");
+        }
+        if (Strings.isNullOrEmpty(type)) {
+            throw new EventException("'eventType' can't be null or blank.");
+        }
+
+        try {
+            eventStorage.create(event2Info(event, type));
+        } catch (Exception e) {
+            throw new EventException("Persist event failed.", e);
+        }
     }
 
     /**
@@ -48,7 +62,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
      * @throws
      */
     @Override
-    public EventInfo lock(EventInfo eventInfo) throws Exception {
+    public EventInfo lock(EventInfo eventInfo) throws EventException {
         if (ConfigManager.getBoolean("event.persistent.lock.optimistic", false)) {
             // 乐观锁直接返回
             return null;
@@ -63,7 +77,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
                     throw new PersistentEventLockException(e);
                 }
                 // 其它Exception
-                throw e;
+                throw new EventException("Lock persistent event failed.", e);
             }
         }
     }
@@ -151,9 +165,9 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         // 事件类型
         info.setEventType(type);
         // 事件状态
-        info.setStatus(EventStatusEnum.PROCESSING.getCode());
-        // 事件内容
-        info.setPayload(event.getPayload());
+        info.setStatus(EventStatusEnum.WAIT.getCode());
+        // 事件内容 使用fastjson序列化
+        info.setPayload(JSON.toJSONString(event));
         // 重试次数
         if (event.isPersistent() && event.getRetry() == 0) {
             // 持久化事件且没有设定重试次数的情况下，使用默认次数

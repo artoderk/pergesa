@@ -1,6 +1,6 @@
 package com.arto.core.consumer;
 
-import com.arto.core.build.MqConfig;
+import com.arto.core.bootstrap.MqConfig;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

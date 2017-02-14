@@ -1,6 +1,6 @@
 package com.arto.kafka.consumer;
 
-import com.arto.kafka.config.KConfigManager;
+import com.arto.kafka.config.KafkaConfigManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -68,22 +68,22 @@ public class KafkaMessageConsumerFactory {
         }
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG
-                , KConfigManager.getString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
+                , KafkaConfigManager.getString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
         props.put(ConsumerConfig.GROUP_ID_CONFIG
-                , KConfigManager.getString(ConsumerConfig.GROUP_ID_CONFIG, "pergesa-msg"));
+                , KafkaConfigManager.getString(ConsumerConfig.GROUP_ID_CONFIG, "pergesa-msg"));
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG
-                , KConfigManager.getString(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"));
+                , KafkaConfigManager.getString(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"));
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG
-                , KConfigManager.getInt(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 1000));
+                , KafkaConfigManager.getInt(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 1000));
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG
-                , KConfigManager.getInt(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, 1048576));
+                , KafkaConfigManager.getInt(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, 1048576));
         props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG
-                , KConfigManager.getInt(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000));
+                , KafkaConfigManager.getInt(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 30000));
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG
-                , KConfigManager.getString(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG
+                , KafkaConfigManager.getString(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG
                 , "org.apache.kafka.common.serialization.StringDeserializer"));
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
-                , KConfigManager.getString(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
+                , KafkaConfigManager.getString(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG
                 , "org.apache.kafka.common.serialization.StringDeserializer"));
 
         prepareEnvironments(props);

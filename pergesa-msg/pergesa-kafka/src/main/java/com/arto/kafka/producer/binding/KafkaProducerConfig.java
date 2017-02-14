@@ -1,5 +1,6 @@
 package com.arto.kafka.producer.binding;
 
+import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.producer.ProducerConfig;
 import com.arto.kafka.common.Constants;
 import lombok.Getter;
@@ -19,7 +20,7 @@ public class KafkaProducerConfig extends ProducerConfig {
         this.setDestination(destination);
     }
 
-    public KafkaProducerConfig(String destination, int priority) {
+    public KafkaProducerConfig(String destination, MessagePriorityEnum priority) {
         this.setType(Constants.KAFKA);
         this.setDestination(destination);
         this.setPriority(priority);

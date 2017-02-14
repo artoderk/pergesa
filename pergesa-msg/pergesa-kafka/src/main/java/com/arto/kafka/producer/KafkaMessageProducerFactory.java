@@ -1,7 +1,7 @@
 package com.arto.kafka.producer;
 
 import com.arto.kafka.common.KAcksEnum;
-import com.arto.kafka.config.KConfigManager;
+import com.arto.kafka.config.KafkaConfigManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -83,24 +83,24 @@ public class KafkaMessageProducerFactory {
         }
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG
-                , KConfigManager.getString(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
+                , KafkaConfigManager.getString(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
         props.put(ProducerConfig.CLIENT_ID_CONFIG
-                , KConfigManager.getString(ProducerConfig.CLIENT_ID_CONFIG, "pergesa-msg"));
+                , KafkaConfigManager.getString(ProducerConfig.CLIENT_ID_CONFIG, "pergesa-msg"));
         props.put(ProducerConfig.ACKS_CONFIG
                 , String.valueOf(convert2Ack(priority)));
         props.put(ProducerConfig.RETRIES_CONFIG
-                , KConfigManager.getInt(ProducerConfig.RETRIES_CONFIG, 3));
+                , KafkaConfigManager.getInt(ProducerConfig.RETRIES_CONFIG, 3));
         props.put(ProducerConfig.BATCH_SIZE_CONFIG
-                , KConfigManager.getInt(ProducerConfig.BATCH_SIZE_CONFIG, 16384));
+                , KafkaConfigManager.getInt(ProducerConfig.BATCH_SIZE_CONFIG, 16384));
         props.put(ProducerConfig.LINGER_MS_CONFIG
-                , KConfigManager.getInt(ProducerConfig.LINGER_MS_CONFIG, 1));
+                , KafkaConfigManager.getInt(ProducerConfig.LINGER_MS_CONFIG, 1));
         props.put(ProducerConfig.BUFFER_MEMORY_CONFIG
-                , KConfigManager.getInt(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432));
+                , KafkaConfigManager.getInt(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432));
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
-                , KConfigManager.getString(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
+                , KafkaConfigManager.getString(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG
                 , "org.apache.kafka.common.serialization.StringSerializer"));
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
-                , KConfigManager.getString(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
+                , KafkaConfigManager.getString(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG
                 , "org.apache.kafka.common.serialization.StringSerializer"));
 
         prepareEnvironments(priority, props);

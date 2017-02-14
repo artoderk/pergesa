@@ -1,7 +1,7 @@
 package com.arto.kafka.consumer;
 
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
-import com.arto.kafka.consumer.strategy.KConsumerStrategyFactory;
+import com.arto.kafka.consumer.strategy.KafkaConsumerStrategyFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -47,7 +47,7 @@ public class KafkaConsumerThread implements Callable{
                 topicPartition = new TopicPartition(record.topic(), record.partition());
             }
             // 处理消息
-            KConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
+            KafkaConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
             // 提交消费标识 TODO 根据优先级处理消息标识与重试
             commitSync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
         }

@@ -3,7 +3,7 @@ package com.arto.event.exception;
 /**
  * Created by xiong.j on 2016/7/21
  */
-public class PersistentEventLockException extends EventProcessException {
+public class PersistentEventLockException extends EventException {
 
     public PersistentEventLockException(String message) {
         super(message);

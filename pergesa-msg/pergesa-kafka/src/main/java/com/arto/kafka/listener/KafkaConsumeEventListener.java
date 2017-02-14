@@ -3,12 +3,11 @@ package com.arto.kafka.listener;
 import com.alibaba.fastjson.JSON;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.exception.MqClientException;
-import com.arto.event.build.EventListener;
+import com.arto.event.bootstrap.EventListener;
 import com.arto.event.service.EventAdviceService;
 import com.arto.event.storage.EventInfo;
 import com.arto.event.util.TypeReferenceUtil;
 import com.arto.kafka.common.Constants;
-import com.arto.kafka.common.KUtil;
 import com.arto.kafka.consumer.KafkaMessageConsumer;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.event.KafkaConsumeEvent;
@@ -63,7 +62,7 @@ public class KafkaConsumeEventListener implements EventListener<KafkaConsumeEven
         // 获取主题的配置
         KafkaConsumerConfig config;
         try {
-            config = consumer.getConfig(KUtil.extractTopic(eventInfo.getBusinessId()));
+            config = consumer.getConfig(event.getDestination());
         } catch (Throwable t) {
             throw new MqClientException("Can't get consumer config of topic=" + event.getDestination(), t);
         }

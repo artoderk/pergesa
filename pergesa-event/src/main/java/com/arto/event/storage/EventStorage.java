@@ -31,11 +31,13 @@ public interface EventStorage {
     /**
      * 事务恢复任务使用的查询SQL
      *
-     * @param systemId
-     * @param tags
-     * @param date
-     * @return
+     * @param systemId 系统ID
+     * @param tags 分区
+     * @param recoveryDate 恢复时间
+     * @param delaySecond 延迟时间
+     * @param limit 限制
+     * @return 事件列表
      */
-    List<EventInfo> findSince(String systemId, List<Integer> tags, Timestamp date);
+    List<EventInfo> findSince(String systemId, List<Integer> tags, Timestamp recoveryDate, Timestamp delaySecond, int limit);
 
 }

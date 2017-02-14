@@ -1,4 +1,4 @@
-import com.arto.core.build.MqClient;
+import com.arto.core.bootstrap.MqClient;
 import com.arto.core.producer.MqProducer;
 import com.arto.kafka.producer.binding.KafkaProducerConfig;
 import common.DefaultTestCase;

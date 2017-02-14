@@ -1,7 +1,7 @@
 package com.arto.kafka.common;
 
 import com.arto.kafka.event.KafkaConsumeEvent;
-import com.arto.kafka.event.KafkaEvent;
+import com.arto.kafka.event.KafkaProduceEvent;
 
 /**
  * Created by xiong.j on 2016/7/26.
@@ -15,7 +15,7 @@ public interface Constants {
     String KAFKA = "kafka";
 
     /** 消息中间件kafka发送消息事件类 */
-    String KAFKA_EVENT_BEAN = KafkaEvent.class.getName();
+    String KAFKA_EVENT_BEAN = KafkaProduceEvent.class.getName();
 
     /** 消息中间件kafka消费消息标识 */
     String K_CONSUME = "K02";

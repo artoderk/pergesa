@@ -1,4 +1,4 @@
-import com.arto.core.build.MqClient;
+import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.consumer.MqListener;
 import com.arto.event.recovery.EventRecoveryService;

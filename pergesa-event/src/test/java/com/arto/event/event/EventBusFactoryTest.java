@@ -1,8 +1,8 @@
 package com.arto.event.event;
 
-import com.arto.event.build.Event;
-import com.arto.event.build.EventBusFactory;
-import com.arto.event.build.EventListener;
+import com.arto.event.bootstrap.Event;
+import com.arto.event.bootstrap.EventBusFactory;
+import com.arto.event.bootstrap.EventListener;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +66,6 @@ public class EventBusFactoryTest {
      */
     @Test
     public void testRegisterForGroupListener() throws Exception {
-        //TODO: Test goes here...
     }
 
     /**
@@ -74,7 +73,6 @@ public class EventBusFactoryTest {
      */
     @Test
     public void testPostEvent() throws Exception {
-        //TODO: Test goes here...
     }
 
     /**
@@ -82,7 +80,6 @@ public class EventBusFactoryTest {
      */
     @Test
     public void testClearListenersJobName() throws Exception {
-        //TODO: Test goes here...
     }
 
     /**
@@ -90,7 +87,6 @@ public class EventBusFactoryTest {
      */
     @Test
     public void testRegisterListener() throws Exception {
-        //TODO: Test goes here...
     }
 
     /**
@@ -98,7 +94,6 @@ public class EventBusFactoryTest {
      */
     @Test
     public void testClearListeners() throws Exception {
-        //TODO: Test goes here...
     }
 
 

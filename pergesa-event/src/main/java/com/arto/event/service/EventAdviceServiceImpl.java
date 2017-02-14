@@ -1,7 +1,7 @@
 package com.arto.event.service;
 
 import com.arto.event.storage.EventInfo;
-import com.arto.event.build.Event;
+import com.arto.event.bootstrap.Event;
 import com.arto.event.exception.PersistentEventLockException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

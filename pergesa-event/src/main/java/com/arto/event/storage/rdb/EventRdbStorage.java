@@ -51,7 +51,7 @@ public class EventRdbStorage implements EventStorage {
 		if (eventInfo.getStatus() != -1) {
 			builder.append(" STATUS = :status, ");
 		}
-		if (eventInfo.getStatus() != 0) {
+		if (eventInfo.getCurrentRetriedCount() != 0) {
 			builder.append(" RETRIED_COUNT_C = :currentRetriedCount, ");
 		}
 		if (eventInfo.getNextRetryTime() != null) {
@@ -69,7 +69,7 @@ public class EventRdbStorage implements EventStorage {
 		if (eventInfo.getStatus() != -1) {
 			builder.append(" STATUS = :status, ");
 		}
-		if (eventInfo.getStatus() != 0) {
+		if (eventInfo.getCurrentRetriedCount() != 0) {
 			builder.append(" RETRIED_COUNT_C = :currentRetriedCount, ");
 		}
 		if (eventInfo.getNextRetryTime() != null) {
@@ -124,26 +124,30 @@ public class EventRdbStorage implements EventStorage {
 	}
 
 	@Override
-	public List<EventInfo> findSince(String systemId, List<Integer> tags, Timestamp date) {
+	public List<EventInfo> findSince(String systemId, List<Integer> tags, Timestamp recoveryDate, Timestamp delaySecond, int limit) {
 		StringBuilder builder = new StringBuilder();
 
+		builder.append(EVENT_SQL + "(");
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId");
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
-		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
-		builder.append(" AND NEXT_RETRY_TIME IS NULL ");
+		builder.append(" AND STATUS = " + EventStatusEnum.WAIT.getCode());
+		builder.append(" AND GMT_MODIFIED > :delaySecond");
 		builder.append(" UNION ALL ");
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId" );
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
 		builder.append(" AND GMT_MODIFIED > :maxRecoveryDate");
 		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
-		builder.append(" AND NEXT_RETRY_TIME IS NOT NULL AND NEXT_RETRY_TIME < :currentDate");
+		builder.append(" AND NEXT_RETRY_TIME < :currentDate");
+		builder.append(" ) es LIMIT = :limit");
 
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("systemId", systemId);
+		paramMap.put("delaySecond", delaySecond);
+		paramMap.put("maxRecoveryDate", recoveryDate);
 		paramMap.put("currentDate", new Timestamp(System.currentTimeMillis()));
-		paramMap.put("maxRecoveryDate", date);
+		paramMap.put("limit", limit);
 
 		return npJdbcTemplate.query(builder.toString(), paramMap, new EventRowMapper());
 	}

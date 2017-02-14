@@ -1,6 +1,7 @@
 package com.arto.event.service;
 
-import com.arto.event.build.Event;
+import com.arto.event.bootstrap.Event;
+import com.arto.event.exception.EventException;
 import com.arto.event.storage.EventInfo;
 
 /**
@@ -13,18 +14,18 @@ public interface PersistentEventService {
      *
      * @param event
      * @param type
-     * @throws
+     * @throws EventException
      */
-    public void persist(Event event, String type) throws Exception;
+    public void persist(Event event, String type) throws EventException;
 
     /**
      * 对持久化Event加锁(JDBC时有效)
      *
      * @param eventInfo
      * @return
-     * @throws
+     * @throws EventException
      */
-    public EventInfo lock(EventInfo eventInfo) throws Exception;
+    public EventInfo lock(EventInfo eventInfo) throws EventException;
 
     /**
      * 持久化Event处理失败时的处理

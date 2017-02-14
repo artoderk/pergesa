@@ -1,8 +1,8 @@
 package com.arto.event.event;
 
-import com.arto.event.build.Event;
-import com.arto.event.build.EventBusFactory;
-import com.arto.event.build.EventListener;
+import com.arto.event.bootstrap.Event;
+import com.arto.event.bootstrap.EventBusFactory;
+import com.arto.event.bootstrap.EventListener;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;

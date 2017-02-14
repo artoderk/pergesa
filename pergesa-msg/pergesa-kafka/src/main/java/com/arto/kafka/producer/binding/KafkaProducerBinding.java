@@ -1,66 +1,102 @@
 package com.arto.kafka.producer.binding;
 
-import com.alibaba.fastjson.JSON;
+import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
-import com.arto.event.build.EventBusFactory;
+import com.arto.event.bootstrap.EventBusFactory;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.common.KMessageRecord;
-import com.arto.kafka.event.KafkaEvent;
+import com.arto.kafka.event.KafkaProduceEvent;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 生产者绑定类，一个对象对应一个Topic和一份配置
  *
  * Created by xiong.j on 2017/1/12.
  */
+@Slf4j
 public class KafkaProducerBinding implements MqProducer {
+
+    private static final BlockingQueue<KafkaProduceEvent> eventQueue = new LinkedBlockingQueue<KafkaProduceEvent>(10000);
+
+    private static final AtomicBoolean closeFlag = new AtomicBoolean(false);
 
     /** Kafka生产者配置 */
     private final KafkaProducerConfig config;
 
     /** 持久化事件服务 */
-    private PersistentEventService service;
+    private final PersistentEventService service;
+
+    static {
+        // 注册Kafka客户端
+        new Thread(new KafkaProducerBinding.KafkaProduceQueueThread()).start();
+    }
 
     public KafkaProducerBinding(KafkaProducerConfig config) {
-        verifyEvent(config);
+        verifyConfig(config);
         this.config = config;
         // 暂时依赖Spring获取
         this.service = SpringContextHolder.getBean("persistentEventService");
     }
 
+    /**
+     * 发送消息(简化方法，非事务类消息可以使用直接使用此方法发送)
+     *
+     * @param message
+     * @throws MqClientException
+     */
     @Override
-    public void send(Object message) throws Exception {
-        innerSend(buildMessage(null, -1, message));
+    public void send(Object message) throws MqClientException {
+        innerSend(buildMessage(null, -1, message), false);
     }
 
+    /**
+     * 发送消息(定制发送，可配置发送参数)
+     * 注:事务消息必须设置"业务凭证流水号"和"业务类型"，以便发送异常时追踪排错
+     *
+     * @param record
+     * @throws MqClientException
+     */
     @Override
-    public void send(String key, Object message) throws Exception {
-        innerSend(buildMessage(key, -1, message));
-    }
-
-    @Override
-    public void send(String key, int partition, Object message) throws Exception {
-        innerSend(buildMessage(key, partition, message));
-    }
-
-    @Override
-    public void send(MessageRecord record) throws Exception {
+    public void send(MessageRecord record) throws MqClientException {
         if (record instanceof KMessageRecord) {
-            innerSend((KMessageRecord)record);
+            innerSend((KMessageRecord)record, config.isTransaction());
         } else {
             throw new MqClientException("Not support this messageRecord:" + record);
         }
     }
 
-    private void innerSend(KMessageRecord record) throws Exception {
+    /**
+     * 发送非事务消息(开启事务发送后，可使用此方法发送非事务消息)
+     *
+     * @param record
+     * @throws MqClientException
+     */
+    @Override
+    public void sendNonTx(MessageRecord record) throws MqClientException {
+        if (record instanceof KMessageRecord) {
+            innerSend((KMessageRecord)record, false);
+        } else {
+            throw new MqClientException("Not support this messageRecord:" + record);
+        }
+    }
+
+    private void innerSend(KMessageRecord record, boolean isTransaction) throws MqClientException {
         // 转换为事件
-        KafkaEvent event = buildEvent(record);
+        KafkaProduceEvent event = buildEvent(record, isTransaction);
         if (event.isPersistent()) {
             // 持久化消息直接持久化(模拟客户端两阶段提交)
             service.persist(event, Constants.KAFKA_EVENT_BEAN);
+            // 加入Queue等待处理(避免定时调度的延迟，调度默认10分钟执行一次)
+            eventQueue.offer(event);
         } else {
             // 非持久化消息直接发送
             EventBusFactory.getInstance().post(event);
@@ -76,15 +112,11 @@ public class KafkaProducerBinding implements MqProducer {
         record.setPartition(partition);
         // 消息
         record.setMessage(message);
-        // 事务
-        record.setTransaction(config.isTransaction());
         return record;
     }
 
-    private KafkaEvent buildEvent(KMessageRecord record){
-        KafkaEvent event = new KafkaEvent();
-        // 事件分组
-        //event.setGroup(com.arto.core.common.Constants.MQ);
+    private KafkaProduceEvent buildEvent(KMessageRecord record, boolean isTransaction){
+        KafkaProduceEvent event = new KafkaProduceEvent();
         // 业务流水号
         event.setBusinessId(record.getBusinessId());
         // 业务类型
@@ -96,22 +128,54 @@ public class KafkaProducerBinding implements MqProducer {
         // 分区
         event.setPartition(record.getPartition());
         // 优先级
-        event.setPriority(config.getPriority());
+        event.setPriority(config.getPriority().getCode());
         // 持久化
-        event.setPersistent(record.isTransaction());
-        // 消息 使用fastjson序列化
-        event.setPayload(JSON.toJSONString(record));
+        event.setPersistent(isTransaction);
+        // 消息
+        event.setPayload(record);
         // 回调
         event.setCallback(config.getCallback());
         return event;
     }
 
-    private void verifyEvent(KafkaProducerConfig config){
-        if (config.getPriority() > 3 || config.getPriority() < -1) {
+    private void verifyConfig(KafkaProducerConfig config){
+        if ((config.getPriority().getCode() > MessagePriorityEnum.LOW.getCode())
+                || (config.getPriority().getCode() < MessagePriorityEnum.HIGH.getCode())) {
             throw new MqClientException("Not support this priority! ProducerConfig:" + config);
         }
-        if ((config.getPriority() == 1 || config.getPriority() == 2) && config.getCallback() != null) {
-            throw new MqClientException("Important messages can't send by asynchronous! ProducerConfig:" + config);
+        if (config.getPriority() == MessagePriorityEnum.HIGH && config.getCallback() != null) {
+            throw new MqClientException("Transaction messages can't send by asynchronous! ProducerConfig:" + config);
+        }
+    }
+
+    /**
+     * 销毁线程
+     */
+    public void close() {
+        if (!closeFlag.get()) {
+            synchronized (KafkaProducerBinding.class) {
+                if (!closeFlag.get()) {
+                    closeFlag.set(true);
+                }
+            }
+        }
+    }
+
+    /**
+     * 持久化消息存储后，直接扔Queue里在此线程处理
+     */
+    private static class KafkaProduceQueueThread implements Runnable{
+
+        @Override
+        public void run() {
+            while (!closeFlag.get()) {
+                try {
+                    KafkaProduceEvent event = eventQueue.poll(1000, TimeUnit.MILLISECONDS);
+                    EventBusFactory.getInstance().post(event);
+                } catch (Throwable t) {
+                    log.warn("Send message failed.", t);
+                }
+            }
         }
     }
 }
