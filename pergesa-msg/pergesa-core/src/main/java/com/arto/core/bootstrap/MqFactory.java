@@ -16,7 +16,7 @@ public interface MqFactory {
      * @param config
      * @return
      */
-    public MqProducer buildProducer(ProducerConfig config);
+    MqProducer buildProducer(ProducerConfig config);
 
     /**
      * 根据消费者配置文件生成一个新的消费者
@@ -24,10 +24,17 @@ public interface MqFactory {
      * @param config
      * @return
      */
-    public MqConsumer buildConsumer(ConsumerConfig config);
+    MqConsumer buildConsumer(ConsumerConfig config);
+
+    /**
+     * 获取当前的实例使用的消息中件间类型
+     *
+     * @return
+     */
+    String getMqType();
 
     /**
      * 销毁所有的生产者和消息者
      */
-    public void destroy();
+    void destroy();
 }

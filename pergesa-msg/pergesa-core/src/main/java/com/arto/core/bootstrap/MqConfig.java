@@ -1,5 +1,6 @@
 package com.arto.core.bootstrap;
 
+import com.arto.core.common.MqTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,10 +11,10 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-public class MqConfig<T> {
+public class MqConfig {
 
     /** 消息中间件类型 */
-    private String type;
+    private MqTypeEnum type = MqTypeEnum.KAFKA;
 
     /** 目的地 */
     private String destination;

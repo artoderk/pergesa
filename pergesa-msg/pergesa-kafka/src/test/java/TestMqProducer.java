@@ -1,4 +1,5 @@
 import com.arto.core.bootstrap.MqClient;
+import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.producer.MqProducer;
 import com.arto.kafka.producer.binding.KafkaProducerConfig;
 import common.DefaultTestCase;
@@ -43,7 +44,7 @@ public class TestMqProducer extends DefaultTestCase {
 
     @Test
     public void sendTx() throws Exception {
-        MqProducer producer = MqClient.buildProducer(new KafkaProducerConfig("test", true));
+        MqProducer producer = MqClient.buildProducer(new KafkaProducerConfig("test", MessagePriorityEnum.HIGH));
 
         List<String> list = new ArrayList<String>();
         list.add("Test1");

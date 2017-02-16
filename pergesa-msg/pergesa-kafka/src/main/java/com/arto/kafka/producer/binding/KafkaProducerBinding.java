@@ -37,7 +37,7 @@ public class KafkaProducerBinding implements MqProducer {
 
     static {
         // 注册Kafka客户端
-        new Thread(new KafkaProducerBinding.KafkaProduceQueueThread()).start();
+        new Thread(new KafkaProducerBinding.KafkaProduceQueueThread(), "KafkaProduceQueueThread").start();
     }
 
     public KafkaProducerBinding(KafkaProducerConfig config) {
@@ -54,8 +54,9 @@ public class KafkaProducerBinding implements MqProducer {
      * @throws MqClientException
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void send(Object message) throws MqClientException {
-        innerSend(buildMessage(null, -1, message), false);
+        innerSend(new MessageRecord(message), false);
     }
 
     /**
@@ -67,11 +68,7 @@ public class KafkaProducerBinding implements MqProducer {
      */
     @Override
     public void send(MessageRecord record) throws MqClientException {
-        if (record instanceof KMessageRecord) {
-            innerSend((KMessageRecord)record, config.isTransaction());
-        } else {
-            throw new MqClientException("Not support this messageRecord:" + record);
-        }
+        innerSend(record, config.isTransaction());
     }
 
     /**
@@ -82,14 +79,10 @@ public class KafkaProducerBinding implements MqProducer {
      */
     @Override
     public void sendNonTx(MessageRecord record) throws MqClientException {
-        if (record instanceof KMessageRecord) {
-            innerSend((KMessageRecord)record, false);
-        } else {
-            throw new MqClientException("Not support this messageRecord:" + record);
-        }
+        innerSend(record, false);
     }
 
-    private void innerSend(KMessageRecord record, boolean isTransaction) throws MqClientException {
+    private void innerSend(MessageRecord record, boolean isTransaction) throws MqClientException {
         // 转换为事件
         KafkaProduceEvent event = buildEvent(record, isTransaction);
         if (event.isPersistent()) {
@@ -105,17 +98,15 @@ public class KafkaProducerBinding implements MqProducer {
 
     @SuppressWarnings("unchecked")
     private KMessageRecord buildMessage(String key, int partition, Object message){
-        KMessageRecord record = new KMessageRecord();
+        KMessageRecord record = new KMessageRecord(message);
         // Hash主键
         record.setKey(key);
         // 分区
         record.setPartition(partition);
-        // 消息
-        record.setMessage(message);
         return record;
     }
 
-    private KafkaProduceEvent buildEvent(KMessageRecord record, boolean isTransaction){
+    private KafkaProduceEvent buildEvent(MessageRecord record, boolean isTransaction){
         KafkaProduceEvent event = new KafkaProduceEvent();
         // 业务流水号
         event.setBusinessId(record.getBusinessId());
@@ -123,10 +114,12 @@ public class KafkaProducerBinding implements MqProducer {
         event.setBusinessType(record.getBusinessType());
         // Topic
         event.setDestination(config.getDestination());
-        // Hash主键
-        event.setKey(record.getKey());
-        // 分区
-        event.setPartition(record.getPartition());
+        if (record instanceof KMessageRecord) {
+            // Hash主键
+            event.setKey(((KMessageRecord)record).getKey());
+            // 分区
+            event.setPartition(((KMessageRecord)record).getPartition());
+        }
         // 优先级
         event.setPriority(config.getPriority().getCode());
         // 持久化
@@ -171,7 +164,9 @@ public class KafkaProducerBinding implements MqProducer {
             while (!closeFlag.get()) {
                 try {
                     KafkaProduceEvent event = eventQueue.poll(1000, TimeUnit.MILLISECONDS);
-                    EventBusFactory.getInstance().post(event);
+                    if (event != null) {
+                        EventBusFactory.getInstance().post(event);
+                    }
                 } catch (Throwable t) {
                     log.warn("Send message failed.", t);
                 }

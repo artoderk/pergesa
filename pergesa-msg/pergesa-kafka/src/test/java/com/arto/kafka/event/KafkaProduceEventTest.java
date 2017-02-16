@@ -17,9 +17,8 @@ public class KafkaProduceEventTest extends DefaultTestCase{
 
     @Test
     public void test() throws Exception {
-        MessageRecord<String> record = new MessageRecord<String>();
+        MessageRecord<String> record = new MessageRecord<String>("message");
         record.setMessageId("messageId");
-        record.setMessage("message");
         KafkaProduceEvent event = new KafkaProduceEvent();
         event.setPartition(1);
         event.setDestination("pegesa-test");

@@ -67,12 +67,11 @@ public class KafkaConfigManager {
         String value = null;
         try {
             value = propertiesResolve.getPropertiesValue(name);
+            if (Strings.isNullOrEmpty(value)) {
+                return properties.getProperty(name);
+            }
         } catch (IllegalArgumentException e) {
             log.debug("Failed load property '" + name + "' from spring");
-        }
-
-        if (Strings.isNullOrEmpty(value)) {
-            return properties.getProperty(name);
         }
         return value;
     }

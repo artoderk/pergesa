@@ -12,6 +12,7 @@
         <module>pergesa-event</module>
         <module>pergesa-msg</module>
         <module>pergesa-doc</module>
+        <module>pergesa-sample</module>
     </modules>
 
     <properties>

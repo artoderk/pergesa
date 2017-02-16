@@ -1,8 +1,8 @@
 package com.arto.kafka.consumer.binding;
 
+import com.arto.core.common.MqTypeEnum;
 import com.arto.core.consumer.ConsumerConfig;
 import com.arto.core.consumer.MqListener;
-import com.arto.kafka.common.Constants;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,13 +19,13 @@ public class KafkaConsumerConfig extends ConsumerConfig {
     private int numThreads;
 
     public KafkaConsumerConfig(String destination, MqListener listener) {
-        this.setType(Constants.KAFKA);
+        this.setType(MqTypeEnum.KAFKA);
         this.setDestination(destination);
         this.setListener(listener);
     }
 
     public KafkaConsumerConfig(String destination, MqListener listener, int priority) {
-        this.setType(Constants.KAFKA);
+        this.setType(MqTypeEnum.KAFKA);
         this.setDestination(destination);
         this.setPriority(priority);
         this.setListener(listener);

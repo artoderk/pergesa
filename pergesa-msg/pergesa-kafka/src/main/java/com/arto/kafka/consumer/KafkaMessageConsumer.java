@@ -33,7 +33,7 @@ public class KafkaMessageConsumer {
     private KafkaMessageConsumerFactory factory;
 
     /** 消息拉取线程 */
-    private volatile PollThread pollThread;
+    private volatile KafkaMessagePollThread pollThread;
 
     /** 消息拉取线程关闭Flag */
     private final AtomicBoolean closeFlag = new AtomicBoolean(false);
@@ -46,8 +46,8 @@ public class KafkaMessageConsumer {
      */
     public void init(){
         try {
-            pollThread = new PollThread(factory.getConsumer());
-            new Thread(pollThread).start();
+            pollThread = new KafkaMessagePollThread(factory.getConsumer());
+            new Thread(pollThread, "KafkaMessagePollThread").start();
         } catch (Exception e) {
             log.error("kafka consumer init failed.");
         }
@@ -95,7 +95,7 @@ public class KafkaMessageConsumer {
     /**
      * Kafka消息拉取线程，一个线程对应多个Topic
      */
-    private class PollThread implements Runnable{
+    private class KafkaMessagePollThread implements Runnable{
 
         /** 消费者 */
         private KafkaConsumer<String, String> consumer;
@@ -112,7 +112,7 @@ public class KafkaMessageConsumer {
          *
          * @param consumer
          */
-        public PollThread(final KafkaConsumer<String, String> consumer){
+        public KafkaMessagePollThread(final KafkaConsumer<String, String> consumer){
             this.consumer = consumer;
             topic = new ArrayList<String>();
         }
@@ -153,10 +153,10 @@ public class KafkaMessageConsumer {
                             System.out.println("####### poll message size:" + records.count());
                         }
                     } catch (Throwable e) {
-                        log.error("poll message failed.", e);
+                        log.warn("poll message failed.", e);
                     }
                 }
-                // 休眠500毫秒
+                // TODO TEST 休眠500毫秒
                 ThreadUtil.sleep(5000, Thread.currentThread(), log);
             }
         }

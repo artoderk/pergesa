@@ -46,7 +46,6 @@ public class EventAdviceServiceImpl implements EventAdviceService {
         if (isPersistentEvent(event)) {
             persistentEventService.finish(event.getEventContext().getEventInfo());
         }
-        // 如果有callback的话，可以在此处处理
     }
 
     /**
@@ -57,7 +56,7 @@ public class EventAdviceServiceImpl implements EventAdviceService {
      */
     @Override
     public void fail(Event event, Throwable throwable){
-        log.error("Process event failed. Event=" + event, throwable);
+        log.warn("Process event failed. Event=" + event, throwable);
         if (isPersistentEvent(event) && !(throwable instanceof PersistentEventLockException)) {
             // 持久化消息 且 错误类型不为加锁失败时
             persistentEventService.fail(event.getEventContext().getEventInfo());

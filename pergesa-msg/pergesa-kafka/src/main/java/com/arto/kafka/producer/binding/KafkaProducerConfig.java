@@ -1,8 +1,8 @@
 package com.arto.kafka.producer.binding;
 
 import com.arto.core.common.MessagePriorityEnum;
+import com.arto.core.common.MqTypeEnum;
 import com.arto.core.producer.ProducerConfig;
-import com.arto.kafka.common.Constants;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,19 +16,16 @@ import lombok.ToString;
 public class KafkaProducerConfig extends ProducerConfig {
 
     public KafkaProducerConfig(String destination) {
-        this.setType(Constants.KAFKA);
+        this.setType(MqTypeEnum.KAFKA);
         this.setDestination(destination);
     }
 
     public KafkaProducerConfig(String destination, MessagePriorityEnum priority) {
-        this.setType(Constants.KAFKA);
+        this.setType(MqTypeEnum.KAFKA);
         this.setDestination(destination);
         this.setPriority(priority);
-    }
-
-    public KafkaProducerConfig(String destination, boolean isTransaction) {
-        this.setType(Constants.KAFKA);
-        this.setDestination(destination);
-        this.setTransaction(isTransaction);
+        if (priority == MessagePriorityEnum.HIGH) {
+            this.setTransaction(true);
+        }
     }
 }

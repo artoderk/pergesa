@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -36,12 +38,21 @@ public class EventRdbStorage implements EventStorage {
 	private NamedParameterJdbcTemplate npJdbcTemplate;
 
 	@Override
-	public int create(EventInfo eventInfo) throws SQLException {
+	public EventInfo create(EventInfo eventInfo) throws SQLException {
 		String sql = (" INSERT INTO EVENT_STORAGE(TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, "
 				+ " EVENT_TYPE, STATUS, PAYLOAD, RETRIED_COUNT_D, GMT_CREATED, GMT_MODIFIED) VALUES ("
 				+ " :tag, :systemId, :businessId, :businessType, :eventType, :status, :payload, :defaultRetriedCount,"
-				+ Constants.PG_DATE_SQL + "," + Constants.PG_DATE_SQL + " )");
-		return npJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(eventInfo));
+				+ Constants.PG_DATE_SQL + "," + Constants.PG_DATE_SQL + " ) ");
+
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		npJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(eventInfo), keyHolder);
+		/*
+		// 为何keyColumnNames设了后会在SQL中加上双引号?
+		npJdbcTemplate.update(sql, new BeanPropertySqlParameterSource(eventInfo), keyHolder, new String[]{"ID", "GMT_MODIFIED"});
+		*/
+		eventInfo.setId((Long)keyHolder.getKeys().get("ID"));
+		eventInfo.setGmtModified((Timestamp)keyHolder.getKeys().get("GMT_MODIFIED"));
+		return eventInfo;
 	}
 
 	@Override

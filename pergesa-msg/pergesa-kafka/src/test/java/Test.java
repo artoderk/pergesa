@@ -5,10 +5,6 @@ import com.arto.core.consumer.MqListener;
 import com.arto.event.util.TypeReferenceUtil;
 import common.TestMessageBean;
 
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Created by xiong.j on 2017/1/24.
  */
@@ -23,17 +19,20 @@ public class Test {
         Class c = TestMessageBean.class;
         MessageRecord<TestMessageBean> t1 = JSON.parseObject(str, TypeReferenceUtil.getType(new TestListener(), "onMessage"));
 
-        Map<String, WeakReference<TestMessageBean>> map = new HashMap<String, WeakReference<TestMessageBean>>();
-        map.put("test1", new WeakReference<TestMessageBean>(new TestMessageBean()));
-        while (map.get("test1").get() != null) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ignored) {
-            }
-            System.out.println("Checking for empty");
-            System.gc();
-            System.out.println("empty=" + map.get("test1").get());
-        }
+//        Map<String, WeakReference<TestMessageBean>> map = new HashMap<String, WeakReference<TestMessageBean>>();
+//        map.put("test1", new WeakReference<TestMessageBean>(new TestMessageBean()));
+//        while (map.get("test1").get() != null) {
+//            try {
+//                Thread.sleep(500);
+//            } catch (InterruptedException ignored) {
+//            }
+//            System.out.println("Checking for empty");
+//            System.gc();
+//            System.out.println("empty=" + map.get("test1").get());
+//        }
+
+        System.out.println(System.getProperty("zkServers"));
+        System.out.println(System.getProperties());
     }
 
     public static Object parse(String message) throws Throwable {

@@ -39,7 +39,7 @@ public class ConfigManager {
         if (!Strings.isNullOrEmpty(val)) {
             result = Integer.parseInt(val);
         }
-        log.info("Load property '" + name + "' = " + result);
+        log.debug("Load property '" + name + "' = " + result);
         return result;
     }
 
@@ -48,7 +48,7 @@ public class ConfigManager {
         if (Strings.isNullOrEmpty(result)) {
             result = value;
         }
-        log.info("Load property '" + name + "' = " + result);
+        log.debug("Load property '" + name + "' = " + result);
         return result;
     }
 
@@ -58,7 +58,7 @@ public class ConfigManager {
         if (!Strings.isNullOrEmpty(val)) {
             result = Boolean.valueOf(val);
         }
-        log.info("Load property '" + name + "' = " + result);
+        log.debug("Load property '" + name + "' = " + result);
         return result;
     }
 

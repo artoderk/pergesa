@@ -43,8 +43,7 @@ public class KafkaConsumeEventListenerTest {
         bean.setName("TestMessageBean");
         bean.setList(list);
 
-        MessageRecord record = new MessageRecord();
-        record.setMessage(bean);
+        MessageRecord record = new MessageRecord(bean);
         record.setMessageId("K0145");
 
         KafkaConsumeEvent event = new KafkaConsumeEvent();

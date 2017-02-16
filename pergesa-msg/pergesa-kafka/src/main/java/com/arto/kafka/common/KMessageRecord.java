@@ -10,8 +10,8 @@ import lombok.ToString;
  */
 @Setter
 @Getter
-@ToString
-public class KMessageRecord extends MessageRecord{
+@ToString(callSuper = true)
+public class KMessageRecord<T> extends MessageRecord{
 
     /** 主键 */
     transient private String key;
@@ -19,9 +19,12 @@ public class KMessageRecord extends MessageRecord{
     /** 分区 */
     transient private int partition = -1;
 
-    public KMessageRecord(){};
-
-    public KMessageRecord(Object message) {
-        this.setMessage(message);
+    public KMessageRecord(T message) {
+        super(message);
     }
+
+    public KMessageRecord(String businessId, String businessType, T message){
+        super(businessId, businessType, message);
+    }
+
 }

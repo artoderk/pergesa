@@ -45,14 +45,14 @@ public class KafkaConsumerBinding implements MqConsumer {
 
     @Override
     public void receive(Class type, MqListener listener) {
-        config.setDeserializer(type);
+        //config.setDeserializer(type);
         config.setListener(listener);
         consumer.subscribe(this);
     }
 
     @Override
     public void receiveWithParallel(Class type, int numThreads, MqListener listener) {
-        config.setDeserializer(type);
+        //config.setDeserializer(type);
         config.setListener(listener);
         config.setNumThreads(numThreads);
         consumer.subscribe(this);
@@ -68,7 +68,7 @@ public class KafkaConsumerBinding implements MqConsumer {
             , final LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue) {
         if (localThread == null) {
             localThread = new ConsumerWithTopicThread(consumer, topicQueue);
-            new Thread(localThread).start();
+            new Thread(localThread, "ConsumerWithTopicThread" + config.getDestination()).start();
         }
     }
 
@@ -138,7 +138,7 @@ public class KafkaConsumerBinding implements MqConsumer {
                 } catch (InterruptedException e) {
                     log.warn("Consumer thread interrupted. ", e);
                 } catch (Throwable e) {
-                    log.error("Topic records process failed. Topic=" + config.getDestination(), e);
+                    log.warn("Topic records process failed. Topic=" + config.getDestination(), e);
                 }
             }
         }

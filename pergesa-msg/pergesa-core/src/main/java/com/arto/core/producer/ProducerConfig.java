@@ -11,7 +11,7 @@ import lombok.ToString;
  */
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class ProducerConfig extends MqConfig {
 
     /** 消息优先级 1:事务消息 2:非事务重要消息 3:普通消息 */

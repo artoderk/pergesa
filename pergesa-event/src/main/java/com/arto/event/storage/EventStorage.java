@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface EventStorage {
 
-    int create(EventInfo eventInfo) throws SQLException;
+    EventInfo create(EventInfo eventInfo) throws SQLException;
 
     /** 普通更新操作 */
     int update(EventInfo eventInfo);

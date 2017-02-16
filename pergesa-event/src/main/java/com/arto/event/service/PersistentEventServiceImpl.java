@@ -2,6 +2,7 @@ package com.arto.event.service;
 
 import com.alibaba.fastjson.JSON;
 import com.arto.event.bootstrap.Event;
+import com.arto.event.bootstrap.EventContext;
 import com.arto.event.common.EventStatusEnum;
 import com.arto.event.config.ConfigManager;
 import com.arto.event.exception.EventException;
@@ -13,6 +14,7 @@ import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.Random;
@@ -38,6 +40,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
      * @param type
      * @throws
      */
+    @Transactional
     @Override
     public void persist(Event event, String type) throws EventException {
         if (Strings.isNullOrEmpty(event.getBusinessId()) || Strings.isNullOrEmpty(event.getBusinessType())) {
@@ -48,7 +51,10 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         }
 
         try {
-            eventStorage.create(event2Info(event, type));
+            EventInfo eventInfo = eventStorage.create(event2Info(event, type));
+            if (eventInfo.getId() != -1) {
+                event.setEventContext(new EventContext(eventInfo));
+            }
         } catch (Exception e) {
             throw new EventException("Persist event failed.", e);
         }

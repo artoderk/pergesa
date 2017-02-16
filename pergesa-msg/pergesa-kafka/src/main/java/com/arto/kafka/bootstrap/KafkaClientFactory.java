@@ -1,19 +1,16 @@
 package com.arto.kafka.bootstrap;
 
-import com.arto.core.bootstrap.MqClient;
 import com.arto.core.bootstrap.MqFactory;
+import com.arto.core.common.MqTypeEnum;
 import com.arto.core.consumer.ConsumerConfig;
 import com.arto.core.consumer.MqConsumer;
-import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.arto.core.producer.ProducerConfig;
-import com.arto.kafka.common.Constants;
 import com.arto.kafka.consumer.binding.KafkaConsumerBinding;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.producer.binding.KafkaProducerBinding;
 import com.arto.kafka.producer.binding.KafkaProducerConfig;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,10 +22,7 @@ import java.util.concurrent.ConcurrentMap;
  * Created by xiong.j on 2017/1/12.
  */
 @Slf4j
-@Component
 public class KafkaClientFactory implements MqFactory {
-
-    private static final KafkaClientFactory instance = new KafkaClientFactory();
 
     private static final ConcurrentMap<String, KafkaProducerBinding> producerMap = new ConcurrentHashMap<String, KafkaProducerBinding>();
 
@@ -38,19 +32,6 @@ public class KafkaClientFactory implements MqFactory {
 
     private static final Object lockConsumer = new Object();
 
-    static {
-        // 注册Kafka客户端
-        MqClient.setMqFactory(Constants.KAFKA, instance);
-    }
-
-    /**
-     * Kafka客户端实例
-     *
-     * @return
-     */
-    public KafkaClientFactory getInstance() {
-        return instance;
-    }
     /**
      * 根据生产者配置文件生成一个新的生产者
      *
@@ -59,7 +40,7 @@ public class KafkaClientFactory implements MqFactory {
      */
     @Override
     public MqProducer buildProducer(ProducerConfig config) {
-        if (config instanceof KafkaProducerConfig) {
+//        if (config instanceof KafkaProducerConfig) {
             if (producerMap.containsKey(config.getDestination())) {
                 return producerMap.get(config.getDestination());
             } else {
@@ -75,9 +56,9 @@ public class KafkaClientFactory implements MqFactory {
                     }
                 }
             }
-        } else {
-            throw new MqClientException("Not support this config:" + config);
-        }
+//        } else {
+//            throw new MqClientException("Not support this config:" + config);
+//        }
     }
 
     /**
@@ -88,7 +69,7 @@ public class KafkaClientFactory implements MqFactory {
      */
     @Override
     public MqConsumer buildConsumer(ConsumerConfig config) {
-        if (config instanceof KafkaConsumerConfig) {
+//        if (config instanceof KafkaConsumerConfig) {
             if (consumerMap.containsKey(config.getDestination())) {
                 return consumerMap.get(config.getDestination());
             } else {
@@ -104,9 +85,14 @@ public class KafkaClientFactory implements MqFactory {
                     }
                 }
             }
-        } else {
-            throw new MqClientException("Not support this config:" + config);
-        }
+//        } else {
+//            throw new MqClientException("Not support this config:" + config);
+//        }
+    }
+
+    @Override
+    public String getMqType() {
+        return MqTypeEnum.KAFKA.getMemo();
     }
 
     /**
@@ -119,6 +105,11 @@ public class KafkaClientFactory implements MqFactory {
             break;
         }
         producerMap.clear();
+
+        for(Map.Entry<String, KafkaConsumerBinding> entry : consumerMap.entrySet()){
+            entry.getValue().close();
+            break;
+        }
         consumerMap.clear();
     }
 }

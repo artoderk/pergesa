@@ -1,63 +1,51 @@
 package com.arto.event.util;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * 以静态变量保存Spring ApplicationContext, 可在任何代码任何地方任何时候中取出ApplicaitonContext
+ * 以静态变量保存Spring的BeanFactory
  *
  * Created by xiong.j on 2017/1/13.
  */
 @Component
-public class SpringContextHolder implements ApplicationContextAware {
-
-	private static ApplicationContext applicationContext;
+public class SpringContextHolder implements BeanFactoryPostProcessor {
 
 	/**
-	 * 实现ApplicationContextAware接口的context注入函数, 将其存入静态变量.
+	 * BeanFactory静态变量.
 	 */
-	public void setApplicationContext(ApplicationContext applicationContext) {
-		SpringContextHolder.applicationContext = applicationContext;
-	}
+	private static BeanFactory beanFactory;
 
 	/**
-	 * 取得存储在静态变量中的ApplicationContext.
-	 */
-	public static ApplicationContext getApplicationContext() {
-		checkApplicationContext();
-		return applicationContext;
-	}
-
-	/**
-	 * 从静态变量ApplicationContext中取得Bean, 自动转型为所赋值对象的类型.
+	 * 根据命名从BeanFactory静态变量中取得Bean, 自动转型为所赋值对象的类型.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T getBean(String name) {
 		checkApplicationContext();
-		return (T) applicationContext.getBean(name);
+		return (T) beanFactory.getBean(name);
 	}
 
 	/**
-	 * 从静态变量ApplicationContext中取得Bean, 自动转型为所赋值对象的类型.
+	 * 根据类型从BeanFactory静态变量中取得Bean, 自动转型为所赋值对象的类型.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T getBean(Class<T> clazz) {
 		checkApplicationContext();
-		return (T) applicationContext.getBean(clazz);
-	}
-
-	/**
-	 * 清除applicationContext静态变量.
-	 */
-	public static void cleanApplicationContext() {
-		applicationContext = null;
+		return (T) beanFactory.getBean(clazz);
 	}
 
 	private static void checkApplicationContext() {
-		if (applicationContext == null) {
+		if (beanFactory == null) {
 			throw new IllegalStateException(
-					"Object ApplicationContext not found.");
+					"BeanFactory not found.");
 		}
+	}
+
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		SpringContextHolder.beanFactory = beanFactory;
 	}
 }

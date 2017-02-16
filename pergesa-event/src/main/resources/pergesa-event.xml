@@ -17,13 +17,13 @@
         </property>
     </bean>
 
-    <bean id="eventProcessExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-        <property name="corePoolSize" value="${eventProcessExecutor.corePoolSize}" />
-        <property name="maxPoolSize" value="${eventProcessExecutor.maxPoolSize}" />
-        <property name="queueCapacity" value="${eventProcessExecutor.queueCapacity}" />
-        <property name="rejectedExecutionHandler">
-            <bean class="java.util.concurrent.ThreadPoolExecutor$CallerRunsPolicy" />
-        </property>
-    </bean>
+    <!--<bean id="eventProcessExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">-->
+        <!--<property name="corePoolSize" value="${eventProcessExecutor.corePoolSize}" />-->
+        <!--<property name="maxPoolSize" value="${eventProcessExecutor.maxPoolSize}" />-->
+        <!--<property name="queueCapacity" value="${eventProcessExecutor.queueCapacity}" />-->
+        <!--<property name="rejectedExecutionHandler">-->
+            <!--<bean class="java.util.concurrent.ThreadPoolExecutor$CallerRunsPolicy" />-->
+        <!--</property>-->
+    <!--</bean>-->
 
 </beans>
