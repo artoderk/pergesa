@@ -12,7 +12,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class TestMqConsumer /*extends DefaultTestCase*/ {
 
     public void testConsumer() {
-        MqConsumer consumer = MqClient.buildConsumer(new KafkaConsumerConfig("pegesa-test", new MqListener<TestMessageBean>() {
+        MqConsumer consumer = MqClient.buildConsumer(new KafkaConsumerConfig("pegesa-test-medium", new MqListener<TestMessageBean>() {
             @Override
             public void onMessage(MessageRecord<TestMessageBean> record) {
                 System.out.println("############ Listener onMessage:" + record);

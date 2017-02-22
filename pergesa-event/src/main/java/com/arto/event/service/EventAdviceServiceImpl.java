@@ -42,7 +42,7 @@ public class EventAdviceServiceImpl implements EventAdviceService {
      */
     @Override
     public void after(Event event){
-        log.info("Process event successful. Event=" + event);
+        log.debug("Process event successful. Event=" + event);
         if (isPersistentEvent(event)) {
             persistentEventService.finish(event.getEventContext().getEventInfo());
         }

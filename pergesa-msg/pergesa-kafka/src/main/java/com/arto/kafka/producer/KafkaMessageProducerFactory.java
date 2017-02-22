@@ -1,5 +1,6 @@
 package com.arto.kafka.producer;
 
+import com.arto.event.common.Destroyable;
 import com.arto.kafka.common.KAcksEnum;
 import com.arto.kafka.config.KafkaConfigManager;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ public class KafkaMessageProducerFactory {
     }
 
     @PreDestroy
-    public synchronized void destroy() throws Exception {
+    public void destroy() {
         for(Map.Entry<Integer, KafkaProducer<String, String>> entry : producerMap.entrySet()){
             entry.getValue().close();
         }
@@ -85,7 +86,7 @@ public class KafkaMessageProducerFactory {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG
                 , KafkaConfigManager.getString(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
         props.put(ProducerConfig.CLIENT_ID_CONFIG
-                , KafkaConfigManager.getString(ProducerConfig.CLIENT_ID_CONFIG, "pergesa-msg"));
+                , KafkaConfigManager.getString(ProducerConfig.CLIENT_ID_CONFIG, "pergesa-msg-ack" + priority));
         props.put(ProducerConfig.ACKS_CONFIG
                 , String.valueOf(convert2Ack(priority)));
         props.put(ProducerConfig.RETRIES_CONFIG
@@ -106,7 +107,7 @@ public class KafkaMessageProducerFactory {
         prepareEnvironments(priority, props);
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(props);
         producerMap.put(priority, producer);
-        log.info("Create kafka producer successful with acks: " + priority);
+        log.info("Create kafka producer successful. config:" + props);
         return producer;
     }
 

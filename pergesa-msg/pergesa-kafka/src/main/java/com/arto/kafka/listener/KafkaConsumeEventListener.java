@@ -1,15 +1,16 @@
 package com.arto.kafka.listener;
 
-import com.alibaba.fastjson.JSON;
+import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.MessageRecord;
+import com.arto.core.common.MqTypeEnum;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.bootstrap.EventListener;
 import com.arto.event.service.EventAdviceService;
 import com.arto.event.storage.EventInfo;
-import com.arto.event.util.TypeReferenceUtil;
+import com.arto.kafka.bootstrap.KafkaClientFactory;
 import com.arto.kafka.common.Constants;
-import com.arto.kafka.consumer.KafkaMessageConsumer;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
+import com.arto.kafka.consumer.strategy.AbstractKafkaConsumerStrategy;
 import com.arto.kafka.event.KafkaConsumeEvent;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -19,16 +20,12 @@ import org.springframework.stereotype.Component;
 
 /**
  * 持久化消息待消费事件监听器
- * TODO 需考虑切换消息中件间后持久化消息的处理
  *
  * Created by xiong.j on 2017/1/19.
  */
 @Slf4j
 @Component
-public class KafkaConsumeEventListener implements EventListener<KafkaConsumeEvent> {
-
-    @Autowired
-    private KafkaMessageConsumer consumer;
+public class KafkaConsumeEventListener extends AbstractKafkaConsumerStrategy implements EventListener<KafkaConsumeEvent> {
 
     @Autowired
     private EventAdviceService service;
@@ -60,27 +57,31 @@ public class KafkaConsumeEventListener implements EventListener<KafkaConsumeEven
         // 持久化信息
         EventInfo eventInfo = event.getEventContext().getEventInfo();
         // 获取主题的配置
-        KafkaConsumerConfig config;
-        try {
-            config = consumer.getConfig(event.getDestination());
-        } catch (Throwable t) {
-            throw new MqClientException("Can't get consumer config of topic=" + event.getDestination(), t);
-        }
+        KafkaConsumerConfig config = getConsumerConfig(event.getDestination());
         // 反序列化消息
-        MessageRecord message;
-        try {
-            message = JSON.parseObject(eventInfo.getPayload(), TypeReferenceUtil.getType(config.getListener()));
-        } catch (Throwable t) {
-            throw new MqClientException("Deserializer message failed, message=" + event.getPayload(), t);
-        }
+        MessageRecord message = deserializerMessage(config, eventInfo.getPayload());
         // 设置消息ID
         message.setMessageId(eventInfo.getBusinessId());
         // 重复消费判断
-        if (!config.getListener().checkRedeliver(message)) {
+        if (!checkRedeliver(config, message)) {
             // 消费消息
-            config.getListener().onMessage(message);
+            onMessage(config, message);
         } else {
-            log.debug("Redelivered message, discard it. message:" + message);
+            log.warn("Redelivered message, discard it. message:" + message);
+        }
+    }
+
+    private KafkaConsumerConfig getConsumerConfig(String destination){
+        // 获取Kafka客户端工厂
+        KafkaClientFactory clientFactory = (KafkaClientFactory)MqClient.getMqFactory(MqTypeEnum.KAFKA.getMemo());
+        try {
+            if (clientFactory != null) {
+                return clientFactory.getConsumerConfig(destination);
+            } else {
+                throw new MqClientException("Kafka client not initialzation.");
+            }
+        } catch (Throwable t) {
+            throw new MqClientException("Can't get consumer config of topic=" + destination, t);
         }
     }
 }

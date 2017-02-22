@@ -1,4 +1,4 @@
-package com.arto.kafka.config;
+package com.arto.core.config;
 
 import com.arto.event.config.ConfigManager;
 import com.arto.event.util.PropertiesResolve;
@@ -13,53 +13,53 @@ import java.util.Properties;
  * Created by xiong.j on 2017/2/8.
  */
 @Slf4j
-public class KafkaConfigManager {
+public class MqConfigManager {
 
     private final PropertiesResolve propertiesResolve;
 
-    private final String defaultFile = "pergesa-kafka.properties";
+    private final String defaultFile = "pergesa-core.properties";
 
     private final Properties properties;
 
-    private KafkaConfigManager(){
+    private MqConfigManager(){
         propertiesResolve = SpringContextHolder.getBean(PropertiesResolve.class);
         properties = init();
     }
 
     private static class KafkaConfigHolder{
-        public static KafkaConfigManager instance = new KafkaConfigManager();
+        public static MqConfigManager instance = new MqConfigManager();
     }
 
-    public static KafkaConfigManager getInstance(){
-        return KafkaConfigManager.KafkaConfigHolder.instance;
+    public static MqConfigManager getInstance(){
+        return MqConfigManager.KafkaConfigHolder.instance;
     }
 
     public static int getInt(String name, int value){
-        String val = KafkaConfigManager.getInstance().getValue(name);
+        String val = MqConfigManager.getInstance().getValue(name);
         int result = value;
         if (!Strings.isNullOrEmpty(val)) {
             result = Integer.parseInt(val);
         }
-        log.debug("Load property '" + name + "' = " + result);
+        log.info("Load property '" + name + "' = " + result);
         return result;
     }
 
     public static String getString(String name, String value){
-        String result = KafkaConfigManager.getInstance().getValue(name);
+        String result = MqConfigManager.getInstance().getValue(name);
         if (Strings.isNullOrEmpty(result)) {
             result = value;
         }
-        log.debug("Load property '" + name + "' = " + result);
+        log.info("Load property '" + name + "' = " + result);
         return result;
     }
 
     public static boolean getBoolean(String name, boolean value){
-        String val = KafkaConfigManager.getInstance().getValue(name);
+        String val = MqConfigManager.getInstance().getValue(name);
         boolean result = value;
         if (!Strings.isNullOrEmpty(val)) {
             result = Boolean.valueOf(val);
         }
-        log.debug("Load property '" + name + "' = " + result);
+        log.info("Load property '" + name + "' = " + result);
         return result;
     }
 

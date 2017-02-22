@@ -2,7 +2,6 @@ package com.arto.kafka.consumer;
 
 import com.arto.event.util.ThreadUtil;
 import com.arto.kafka.consumer.binding.KafkaConsumerBinding;
-import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -17,7 +16,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -37,9 +35,6 @@ public class KafkaMessageConsumer {
 
     /** 消息拉取线程关闭Flag */
     private final AtomicBoolean closeFlag = new AtomicBoolean(false);
-
-    /** Topic订阅配置集合 */
-    private final ConcurrentMap<String, KafkaConsumerBinding> bindingMap = new ConcurrentHashMap<String, KafkaConsumerBinding>();
 
     /**
      * 初始化
@@ -66,7 +61,6 @@ public class KafkaMessageConsumer {
                 }
             }
         }
-        bindingMap.put(kafkaConsumerBinding.getConfig().getDestination(), kafkaConsumerBinding);
         pollThread.subscribe(kafkaConsumerBinding);
     }
 
@@ -74,22 +68,9 @@ public class KafkaMessageConsumer {
      * 销毁
      */
     @PreDestroy
-    public void destroy(){
+    public void destroy() {
         log.info("Kafka Consumer poll thread is destroyed.");
         closeFlag.set(true);
-        for(Map.Entry<String, KafkaConsumerBinding> entry : bindingMap.entrySet()){
-            entry.getValue().close();
-        }
-    }
-
-    /**
-     * 根据主题获取对应的配置
-     *
-     * @param topic
-     * @return
-     */
-    public KafkaConsumerConfig getConfig(String topic) {
-        return bindingMap.get(topic).getConfig();
     }
 
     /**
@@ -150,13 +131,13 @@ public class KafkaMessageConsumer {
                                 // 将拉取到的消息按Topic分类
                                 topicRecords.get(partition.topic()).put(records.records(partition));
                             }
-                            System.out.println("####### poll message size:" + records.count());
+                            System.out.println("####### poll topic:" + consumer.subscription() + ", message size:" + records.count());
                         }
                     } catch (Throwable e) {
                         log.warn("poll message failed.", e);
                     }
                 }
-                // TODO TEST 休眠500毫秒
+                // TODO TEST 休眠5000毫秒
                 ThreadUtil.sleep(5000, Thread.currentThread(), log);
             }
         }

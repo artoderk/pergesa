@@ -38,7 +38,6 @@ public class TestRecover {
         tag.add(8);
         List<EventInfo> list = eventRecoveryService.fetchData(tag);
         eventRecoveryService.execute(list);
-        MqClient.destroy();
     }
 
 }

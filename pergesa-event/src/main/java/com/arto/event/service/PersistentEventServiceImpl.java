@@ -10,6 +10,7 @@ import com.arto.event.exception.PersistentEventLockException;
 import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
 import com.arto.event.util.DateUtil;
+import com.arto.event.util.StringUtil;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -158,7 +159,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         }
     }
 
-    private EventInfo event2Info(Event event, String type){
+    private EventInfo event2Info(Event event, String type) throws Exception {
         EventInfo info = new EventInfo();
         // Tag(事件分片数)
         info.setTag(random.nextInt(ConfigManager.getInt("event.storage.tag", 10)));
@@ -172,8 +173,8 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         info.setEventType(type);
         // 事件状态
         info.setStatus(EventStatusEnum.WAIT.getCode());
-        // 事件内容 使用fastjson序列化
-        info.setPayload(JSON.toJSONString(event));
+        // 事件内容 使用fastjson序列化 并检测是否超过1M
+        info.setPayload(StringUtil.checkSize(JSON.toJSONString(event), 1048576));
         // 重试次数
         if (event.isPersistent() && event.getRetry() == 0) {
             // 持久化事件且没有设定重试次数的情况下，使用默认次数

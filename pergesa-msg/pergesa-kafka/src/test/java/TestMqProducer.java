@@ -24,8 +24,8 @@ public class TestMqProducer extends DefaultTestCase {
     }
 
     @Test
-    public void send() throws Exception {
-        MqProducer producer = MqClient.buildProducer(new KafkaProducerConfig("pegesa-test"));
+    public void sendOnce() throws Exception {
+        MqProducer producer = MqClient.buildProducer(new KafkaProducerConfig("pegesa-test-low", MessagePriorityEnum.LOW));
 
         List<String> list = new ArrayList<String>();
         list.add("Test1");
@@ -40,6 +40,31 @@ public class TestMqProducer extends DefaultTestCase {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void send10000() throws Exception {
+        MqProducer producer = MqClient.buildProducer(new KafkaProducerConfig("pegesa-test"));
+
+        List<String> list = new ArrayList<String>();
+        list.add("Test1");
+        list.add("Test2");
+        TestMessageBean bean = new TestMessageBean();
+        bean.setId(1);
+        bean.setName("TestMessageBean");
+        bean.setList(list);
+
+        long start = System.currentTimeMillis();
+        try {
+            for (int i = 1; i< 10000; i++) {
+                bean.setId(i);
+                producer.send(bean);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // Producer是懒加载，计数不准
+        System.out.println(System.currentTimeMillis() - start);
     }
 
     @Test

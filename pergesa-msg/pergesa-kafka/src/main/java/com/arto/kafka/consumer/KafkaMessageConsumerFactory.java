@@ -94,7 +94,7 @@ public class KafkaMessageConsumerFactory {
     }
 
     @PreDestroy
-    public synchronized void destroy() throws Exception {
+    public void destroy() {
         for(Map.Entry<String, KafkaConsumer<String, String>> entry : consumerMap.entrySet()){
             entry.getValue().close();
         }

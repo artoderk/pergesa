@@ -78,8 +78,18 @@ public class KafkaProducerBinding implements MqProducer {
      * @throws MqClientException
      */
     @Override
+    @Deprecated
     public void sendNonTx(MessageRecord record) throws MqClientException {
         innerSend(record, false);
+    }
+
+    /**
+     * 获取绑定的配置
+     *
+     * @return
+     */
+    public KafkaProducerConfig getConfig() {
+        return config;
     }
 
     private void innerSend(MessageRecord record, boolean isTransaction) throws MqClientException {
@@ -97,15 +107,6 @@ public class KafkaProducerBinding implements MqProducer {
     }
 
     @SuppressWarnings("unchecked")
-    private KMessageRecord buildMessage(String key, int partition, Object message){
-        KMessageRecord record = new KMessageRecord(message);
-        // Hash主键
-        record.setKey(key);
-        // 分区
-        record.setPartition(partition);
-        return record;
-    }
-
     private KafkaProduceEvent buildEvent(MessageRecord record, boolean isTransaction){
         KafkaProduceEvent event = new KafkaProduceEvent();
         // 业务流水号

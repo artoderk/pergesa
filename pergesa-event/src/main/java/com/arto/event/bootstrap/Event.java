@@ -10,7 +10,7 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-public class Event {
+public class Event<T> {
 
     /** 事件分组 */
     private transient Class group;
@@ -25,7 +25,7 @@ public class Event {
     private Object payload;
 
     /** 事件回调 */
-    private transient EventCallback callback;
+    private transient EventCallback<T> callback;
 
     /** 是否持久化 */
     private transient boolean isPersistent;

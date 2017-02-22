@@ -1,18 +1,19 @@
 package com.arto.kafka.consumer.strategy;
 
-import com.alibaba.fastjson.JSON;
+import com.arto.event.common.Destroyable;
 import com.arto.core.common.MessageRecord;
-import com.arto.core.consumer.MqListener;
-import com.arto.event.util.TypeReferenceUtil;
 import com.arto.event.bootstrap.Event;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
+import com.arto.event.util.SpringDestroyableUtil;
 import com.arto.event.util.ThreadUtil;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.event.KafkaConsumeEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.arto.kafka.common.KUtil.buildMessageId;
 
@@ -23,17 +24,30 @@ import static com.arto.kafka.common.KUtil.buildMessageId;
  * Created by xiong.j on 2017/1/20.
  */
 @Slf4j
-class KafkaConsumerDefaultStrategy implements KafkaConsumerStrategy {
+class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy implements KafkaConsumerStrategy, Destroyable {
 
     private final PersistentEventService service;
 
+    /** 消息拉取线程关闭Flag */
+    private final AtomicBoolean closeFlag = new AtomicBoolean(false);
+
     KafkaConsumerDefaultStrategy(){
         this.service = SpringContextHolder.getBean("persistentEventService");
+        // 注册勾子
+        SpringDestroyableUtil.add("kafkaConsumerDefaultStrategy", this);
     }
 
     @Override
     public void onMessage(final KafkaConsumerConfig config, final ConsumerRecord<String, String> record) {
         tryConsume(config, record);
+    }
+
+    /**
+     * 销毁
+     */
+    @Override
+    public void destroy() {
+        closeFlag.set(true);
     }
 
     @SuppressWarnings("unchecked")
@@ -42,11 +56,15 @@ class KafkaConsumerDefaultStrategy implements KafkaConsumerStrategy {
         for (int i = 1; i <= 3; i++) {
             MessageRecord message = null;
             try {
+                // 反序列化消息
+                message = deserializerMessage(config, record.value());
                 // 生成消息ID
-                message = buildMessage(config.getListener(), record.value());
                 message.setMessageId(buildMessageId(record.partition(), record.offset()));
-                // 消费消息
-                config.getListener().onMessage(message);
+                // 重复消费检测
+                if (!checkRedeliver(config, message)) {
+                    // 消费消息
+                    onMessage(config, message);
+                }
                 break;
             } catch (Throwable e) {
                 log.warn("Receive message failed, waiting for retry. record=" + record, e);
@@ -65,7 +83,7 @@ class KafkaConsumerDefaultStrategy implements KafkaConsumerStrategy {
         // 转换为事件
         Event event = buildEvent(record, message);
         // 无限重试直到持久化成功
-        while (true){
+        while (closeFlag.get()){
             try {
                 service.persist(event, Constants.K_CONSUME_EVENT_BEAN);
                 break;
@@ -73,15 +91,9 @@ class KafkaConsumerDefaultStrategy implements KafkaConsumerStrategy {
                 log.warn("Persist message failed, waiting for retry. record=" + record, e);
             }
             // 持久化消息错误，暂停处理一小会
-            ThreadUtil.sleep(10000, Thread.currentThread(), log);
+            ThreadUtil.sleep(5000, Thread.currentThread(), log);
         }
         log.info("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
-    }
-
-    private MessageRecord buildMessage(MqListener listener, String payload) throws Throwable {
-        // 反序列化消息
-        MessageRecord message = JSON.parseObject(payload, TypeReferenceUtil.getType(listener));
-        return message;
     }
 
     private Event buildEvent(final ConsumerRecord<String, String> record, MessageRecord message){

@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Created by xiong.j on 2016/8/16.
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { "classpath:pergesa-test.xml" })
+@ContextConfiguration(locations = {"classpath:pergesa-test.xml"})
 @TransactionConfiguration(transactionManager="transactionManager", defaultRollback=true)
 @Transactional
 public abstract class DalTestCase extends BaseTestCase {

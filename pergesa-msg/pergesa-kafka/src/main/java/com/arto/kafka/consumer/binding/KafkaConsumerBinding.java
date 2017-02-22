@@ -44,6 +44,7 @@ public class KafkaConsumerBinding implements MqConsumer {
     }
 
     @Override
+    @Deprecated
     public void receive(Class type, MqListener listener) {
         //config.setDeserializer(type);
         config.setListener(listener);
@@ -51,6 +52,7 @@ public class KafkaConsumerBinding implements MqConsumer {
     }
 
     @Override
+    @Deprecated
     public void receiveWithParallel(Class type, int numThreads, MqListener listener) {
         //config.setDeserializer(type);
         config.setListener(listener);
@@ -68,7 +70,7 @@ public class KafkaConsumerBinding implements MqConsumer {
             , final LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue) {
         if (localThread == null) {
             localThread = new ConsumerWithTopicThread(consumer, topicQueue);
-            new Thread(localThread, "ConsumerWithTopicThread" + config.getDestination()).start();
+            new Thread(localThread, "ConsumerWithTopicThread_" + config.getDestination()).start();
         }
     }
 
@@ -121,17 +123,16 @@ public class KafkaConsumerBinding implements MqConsumer {
         @Override
         public void run() {
             while (!closeFlag.get()) {
-                List<ConsumerRecord<String, String>> records = null;
-                TopicPartition topicPartition = null;
+                List<ConsumerRecord<String, String>> records;
+                TopicPartition topicPartition;
                 try {
                     // 获取拉取到的消息
                     records = topicQueue.poll(10, TimeUnit.SECONDS);
                     if (records != null) {
-                        System.out.println("###### ConsumerWithTopicThread records:" + records);
                         // 暂停当前分区的消息拉取直到消息处理完成
                         topicPartition = new TopicPartition(config.getDestination(), records.get(0).partition());
                         consumer.pause(singleton(topicPartition));
-
+                        log.info("Consumer pause:" + topicPartition);
                         // 将消息按分区消息
                         executor.submit(new KafkaConsumerThread(consumer, config, records));
                     }
@@ -148,7 +149,7 @@ public class KafkaConsumerBinding implements MqConsumer {
          */
         public void destroy() {
             executor.shutdown();
-            log.info("Kafka Consumer thread pool is destroyed. topic=" + config.getDestination());
+            log.info("Kafka consumer thread pool is destroyed. topic=" + config.getDestination());
         }
     }
 }

@@ -102,14 +102,38 @@ public class KafkaClientFactory implements MqFactory {
     public void destroy() {
         for(Map.Entry<String, KafkaProducerBinding> entry : producerMap.entrySet()){
             entry.getValue().close();
-            break;
         }
         producerMap.clear();
 
         for(Map.Entry<String, KafkaConsumerBinding> entry : consumerMap.entrySet()){
             entry.getValue().close();
-            break;
         }
         consumerMap.clear();
+    }
+
+    /**
+     * 获取生产者的配置
+     *
+     * @param destination
+     * @return
+     */
+    public KafkaProducerConfig getProducerConfig(String destination){
+        if (producerMap.containsKey(destination)) {
+            return producerMap.get(destination).getConfig();
+        }
+        return null;
+    }
+
+    /**
+     * 获取消费者的配置
+     *
+     * @param destination
+     * @return
+     */
+    public KafkaConsumerConfig getConsumerConfig(String destination){
+        if (consumerMap.containsKey(destination)) {
+            return consumerMap.get(destination).getConfig();
+        }
+        return null;
     }
 }

@@ -5,6 +5,10 @@ import com.arto.core.consumer.MqConsumer;
 import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.arto.core.producer.ProducerConfig;
+import com.arto.event.common.Destroyable;
+import com.arto.event.util.SpringDestroyableUtil;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -17,7 +21,10 @@ import java.util.concurrent.ConcurrentMap;
  *
  * Created by xiong.j on 2017/1/11.
  */
-public class MqClient {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class MqClient implements Destroyable{
+
+    private static final MqClient instance = new MqClient();
 
     private static final ConcurrentMap<String, MqFactory> factoryMap
             = new ConcurrentHashMap<String, MqFactory>(3);
@@ -38,6 +45,8 @@ public class MqClient {
             mqFactory = mqFactories.next();
             factoryMap.put(mqFactory.getMqType(), mqFactory);
         }
+        // 注册勾子
+        SpringDestroyableUtil.add("mqClient", instance);
     }
 
     /**
@@ -68,25 +77,35 @@ public class MqClient {
         }
     }
 
+//    /**
+//     * 添加一个新的消息中件客户端生成器
+//     *
+//     * @param key
+//     * @param factory
+//     * @return
+//     */
+//    public synchronized static void addMqFactory(String key, MqFactory factory){
+//        if (factoryMap.containsKey(key)) {
+//            throw new MqClientException("Can't override exist MqFactory, key:" + key);
+//        } else {
+//            factoryMap.put(key, factory);
+//        }
+//    }
+
     /**
-     * 添加一个新的消息中件客户端生成器
-     *
-     * @param key
-     * @param factory
-     * @return
+     * 获取消息中件客户端生成器
      */
-    public synchronized static void addMqFactory(String key, MqFactory factory){
-        if (factoryMap.containsKey(key)) {
-            throw new MqClientException("Can't override exist MqFactory, key:" + key);
-        } else {
-            factoryMap.put(key, factory);
+    public static MqFactory getMqFactory(String mqType){
+        if (factoryMap.containsKey(mqType)) {
+            return factoryMap.get(mqType);
         }
+        return null;
     }
 
     /**
      * 销毁所有的生产者和消息者
      */
-    public static void destroy(){
+    public void destroy() {
         for(Map.Entry<String, MqFactory> entry : factoryMap.entrySet()){
             entry.getValue().destroy();
         }

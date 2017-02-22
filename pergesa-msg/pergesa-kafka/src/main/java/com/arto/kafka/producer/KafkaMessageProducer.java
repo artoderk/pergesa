@@ -2,6 +2,7 @@ package com.arto.kafka.producer;
 
 import com.alibaba.fastjson.JSON;
 import com.arto.core.exception.MqClientException;
+import com.arto.event.util.StringUtil;
 import com.arto.kafka.common.KMessageRecord;
 import com.arto.kafka.common.KUtil;
 import com.arto.kafka.config.KafkaConfigManager;
@@ -20,7 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * TODO info改debug
+ * Kafka消息生产者
  *
  * Created by xiong.j on 2016/7/21.
  */
@@ -30,9 +31,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class KafkaMessageProducer {
 
-//    /** 同步发送时的超时时间 */
-//    @Value("${kafka.producer.timeout:30}")
-//    private int timeout;
+    /** 同步发送时的超时时间 */
+    private int timeout = KafkaConfigManager.getInt("kafka.producer.timeout", 10);
 
     /** 生产者工厂 */
     @Autowired
@@ -49,8 +49,8 @@ public class KafkaMessageProducer {
         ProducerRecord<String, String> producerRecord = null;
 
         try {
-            // 通过JOSN序列化
-            String payload = JSON.toJSONString(event.getPayload());
+            // 序列化消息 并检测是否超过1M
+            String payload = StringUtil.checkSize(JSON.toJSONString(event.getPayload()), 1048576);
             if (event.getPartition() == -1) {
                 // 没有设置分区
                 if (Strings.isNullOrEmpty(event.getKey())) {
@@ -63,33 +63,46 @@ public class KafkaMessageProducer {
                 producerRecord = new ProducerRecord<String, String>(event.getDestination(), event.getPartition(), event.getKey(), payload);
             }
 
-            if (event.getPriority() != 3) {
+            if (event.getPriority() != 3 && event.getCallback() == null) {
                 // 同步发送
-                future = factory.getProducer(event.getPriority()).send(producerRecord);
-                RecordMetadata metadata = (RecordMetadata) future.get(
-                        KafkaConfigManager.getInt("kafka.producer.timeout", 30), TimeUnit.SECONDS);
-                log.info("Kafka Send to topic:" + event.getDestination() + ", partition" + metadata.partition() + ", message:" + event.getPayload());
+                synSend(event, producerRecord);
             } else {
                 // 异步发送
-                if (event.getCallback() != null) {
-                    // 有同调
-                    future = factory.getProducer(event.getPriority()).send(producerRecord, new Callback() {
-                        @Override
-                        public void onCompletion(RecordMetadata metadata, Exception exception) {
-                            // 设置MessageId
-                            KMessageRecord kMessageRecord = (KMessageRecord)event.getPayload();
-                            kMessageRecord.setMessageId(KUtil.buildMessageId(metadata.partition(), metadata.offset()));
-                            event.getCallback().onCompletion(event);
-                        }
-                    });
-                } else {
-                    // 无回调
-                    future = factory.getProducer(event.getPriority()).send(producerRecord, null);
-                }
-                log.info("Kafka Asynchronously send to topic:" + event.getDestination() + ", message:" + event.getPayload());
+                asynSend(event, producerRecord);
             }
         } catch (Throwable e) {
             throw new MqClientException("Kafka send message failed: " + event, e);
         }
+    }
+
+    private RecordMetadata synSend(final KafkaProduceEvent event, final ProducerRecord<String, String> producerRecord) throws Throwable {
+        // 同步发送
+        Future future = factory.getProducer(event.getPriority()).send(producerRecord);
+        RecordMetadata metadata = (RecordMetadata) future.get(timeout, TimeUnit.SECONDS);
+        log.debug("Kafka send to topic:" + event.getDestination() + ", partition" + metadata.partition() + ", message:" + event.getPayload());
+        return metadata;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Future asynSend(final KafkaProduceEvent event, final ProducerRecord<String, String> producerRecord) throws Throwable {
+        Future future;
+        // 异步发送
+        if (event.getCallback() != null) {
+            // 有回调
+            future = factory.getProducer(event.getPriority()).send(producerRecord, new Callback() {
+                @Override
+                public void onCompletion(RecordMetadata metadata, Exception exception) {
+                    // 设置MessageId
+                    KMessageRecord kMessageRecord = (KMessageRecord)event.getPayload();
+                    kMessageRecord.setMessageId(KUtil.buildMessageId(metadata.partition(), metadata.offset()));
+                    event.getCallback().onCompletion(event);
+                }
+            });
+        } else {
+            // 无回调
+            future = factory.getProducer(event.getPriority()).send(producerRecord, null);
+        }
+        log.debug("Kafka Asynchronously send to topic:" + event.getDestination() + ", message:" + event.getPayload());
+        return future;
     }
 }

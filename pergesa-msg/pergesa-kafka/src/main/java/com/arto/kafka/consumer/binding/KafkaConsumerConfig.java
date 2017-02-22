@@ -12,11 +12,16 @@ import lombok.ToString;
  */
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class KafkaConsumerConfig extends ConsumerConfig {
 
     /** 并发线程数量 */
     private int numThreads;
+
+    public KafkaConsumerConfig(String destination) {
+        this.setType(MqTypeEnum.KAFKA);
+        this.setDestination(destination);
+    }
 
     public KafkaConsumerConfig(String destination, MqListener listener) {
         this.setType(MqTypeEnum.KAFKA);

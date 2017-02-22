@@ -25,7 +25,7 @@ public interface MqProducer<T> {
      * @param record
      * @throws MqClientException
      */
-    void send(MessageRecord record) throws MqClientException;
+    void send(MessageRecord<T> record) throws MqClientException;
 
     /**
      * 发送非事务消息(开启事务发送后，可使用此方法发送非事务消息)
@@ -33,5 +33,6 @@ public interface MqProducer<T> {
      * @param record
      * @throws MqClientException
      */
-    void sendNonTx(MessageRecord record) throws MqClientException;
+    @Deprecated
+    void sendNonTx(MessageRecord<T> record) throws MqClientException;
 }

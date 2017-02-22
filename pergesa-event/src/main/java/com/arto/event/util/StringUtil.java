@@ -1,5 +1,6 @@
 package com.arto.event.util;
 
+import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -22,5 +23,13 @@ public class StringUtil {
         }
 
         return var2.toString();
+    }
+
+    public static String checkSize(String value, int maxSize) throws Exception {
+        if (Strings.isNullOrEmpty(value)) return "";
+        if (value.getBytes("utf-8").length <= maxSize) {
+            return value;
+        }
+        throw new Exception("String size over max size. string:" + value + ", max size:" + maxSize);
     }
 }

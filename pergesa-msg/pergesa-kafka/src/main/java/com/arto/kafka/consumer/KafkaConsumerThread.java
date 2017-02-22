@@ -1,5 +1,6 @@
 package com.arto.kafka.consumer;
 
+import com.arto.core.exception.MqClientException;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.consumer.strategy.KafkaConsumerStrategyFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -41,19 +42,26 @@ public class KafkaConsumerThread implements Callable{
     public Object call() throws Exception {
         TopicPartition topicPartition = null;
 
-        for (ConsumerRecord<String, String> record : records) {
-            log.info("consume message record:" + record);
-            if (topicPartition == null) {
-                topicPartition = new TopicPartition(record.topic(), record.partition());
+        try {
+            for (ConsumerRecord<String, String> record : records) {
+                log.debug("Consume message:" + record);
+                if (topicPartition == null) {
+                    topicPartition = new TopicPartition(record.topic(), record.partition());
+                }
+                // 处理消息
+                KafkaConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
+                // 提交消费标识 TODO 根据优先级处理消息标识与重试
+                commitSync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
             }
-            // 处理消息
-            KafkaConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
-            // 提交消费标识 TODO 根据优先级处理消息标识与重试
-            commitSync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
+
+            // TODO 使用单独线程管理消费的暂停与恢复
+            consumer.resume(Collections.singleton(topicPartition));
+            log.info("Consumer resume:" + topicPartition);
+        } catch (Throwable t) {
+            log.warn("Consume failed", t);
+            throw new MqClientException(t);
         }
 
-        // TODO 使用单独线程管理消费的暂停与恢复
-        consumer.resume(Collections.singleton(topicPartition));
         return null;
     }
 

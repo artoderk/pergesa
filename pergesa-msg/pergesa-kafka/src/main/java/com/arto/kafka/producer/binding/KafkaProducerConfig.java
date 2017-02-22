@@ -12,7 +12,7 @@ import lombok.ToString;
  */
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class KafkaProducerConfig extends ProducerConfig {
 
     public KafkaProducerConfig(String destination) {
