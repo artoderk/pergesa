@@ -44,7 +44,7 @@ public class TestMqProducer extends DefaultTestCase {
 
     @Test
     public void send10000() throws Exception {
-        MqProducer producer = MqClient.buildProducer(new KafkaProducerConfig("pegesa-test"));
+        MqProducer producer = MqClient.buildProducer(new KafkaProducerConfig("pegesa-test-low", MessagePriorityEnum.LOW));
 
         List<String> list = new ArrayList<String>();
         list.add("Test1");

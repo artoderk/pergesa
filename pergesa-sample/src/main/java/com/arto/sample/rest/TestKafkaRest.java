@@ -42,7 +42,22 @@ public class TestKafkaRest {
     private MqProducer<OrderDO> lowProducer;
 
     /**
-     * 高优先级接口，性能最慢，单线程约300/S
+     * 并发测试接口，同时发送三个TOPIC
+     *
+     * @param amount
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value="/con/{amount}")
+    @ResponseBody
+    public String concurrence(@PathVariable int amount)throws Exception {
+        return "high" + send(highProducer, amount, 0) + ", medium" +  send(mediumProducer, amount, 0)
+                + ", low:" + send(lowProducer, amount, 0);
+    }
+
+
+    /**
+     * 高优先级接口，同步2复制因子，性能最慢，单线程约300/S
      *
      * @param amount
      * @return
@@ -55,7 +70,7 @@ public class TestKafkaRest {
     }
 
     /**
-     * 中优先级接口，性能普通，单线程约500/S
+     * 中优先级接口，同步无复制，性能普通，单线程约500/S
      *
      * @param amount
      * @return
@@ -68,7 +83,7 @@ public class TestKafkaRest {
     }
 
     /**
-     * 低优先级接口，性能最慢，单线程约2W/S
+     * 低优先级接口，异步无复制，性能最高，单线程约2W/S
      *
      * @param amount
      * @return

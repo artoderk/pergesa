@@ -48,6 +48,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
     @Override
     public void destroy() {
         closeFlag.set(true);
+        log.info("Destroy KafkaConsumerDefaultStrategy successful.");
     }
 
     @SuppressWarnings("unchecked")

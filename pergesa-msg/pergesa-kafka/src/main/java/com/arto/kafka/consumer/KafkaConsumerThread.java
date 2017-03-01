@@ -1,11 +1,11 @@
 package com.arto.kafka.consumer;
 
+import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.exception.MqClientException;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.consumer.strategy.KafkaConsumerStrategyFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 
@@ -22,8 +22,8 @@ import java.util.concurrent.Callable;
 @Slf4j
 public class KafkaConsumerThread implements Callable{
 
-    /** Kafka消费者 */
-    private KafkaConsumer<String, String> consumer;
+    /** Kafka消费者包装类 */
+    private KafkaConsumerWrapper<String, String> consumerWrapper;
 
     /** Topic消费者配置 */
     private KafkaConsumerConfig config;
@@ -31,9 +31,9 @@ public class KafkaConsumerThread implements Callable{
     /** Topic拉取的消息(单个分区) */
     private List<ConsumerRecord<String, String>> records;
 
-    public KafkaConsumerThread(final KafkaConsumer<String, String> consumer, final KafkaConsumerConfig config
+    public KafkaConsumerThread(final KafkaConsumerWrapper<String, String> consumerWrapper, final KafkaConsumerConfig config
             , final List<ConsumerRecord<String, String>> records) {
-        this.consumer = consumer;
+        this.consumerWrapper = consumerWrapper;
         this.config = config;
         this.records = records;
     }
@@ -44,21 +44,25 @@ public class KafkaConsumerThread implements Callable{
 
         try {
             for (ConsumerRecord<String, String> record : records) {
-                log.debug("Consume message:" + record);
+                log.debug("Kafka consume message:" + record);
                 if (topicPartition == null) {
                     topicPartition = new TopicPartition(record.topic(), record.partition());
                 }
                 // 处理消息
                 KafkaConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
-                // 提交消费标识 TODO 根据优先级处理消息标识与重试
-                commitSync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
+                // 提交消费标识 TODO 消息标识批量提交
+                if (config.getPriority() != MessagePriorityEnum.LOW.getCode()) {
+                    commitSync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
+                } else {
+                    // 大量异步提交时报coordinator unavailable？？ 所以低优先级走自动提交..
+                    // commitAsync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
+                }
             }
 
-            // TODO 使用单独线程管理消费的暂停与恢复
-            consumer.resume(Collections.singleton(topicPartition));
-            log.info("Consumer resume:" + topicPartition);
+            consumerWrapper.resume(Collections.singleton(topicPartition));
+            log.info("Kafka consumer resume:" + topicPartition + ", thread:" + Thread.currentThread().getName());
         } catch (Throwable t) {
-            log.warn("Consume failed", t);
+            log.warn("Kafka message consume failed", t);
             throw new MqClientException(t);
         }
 
@@ -67,11 +71,11 @@ public class KafkaConsumerThread implements Callable{
 
     private void commitSync(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
         Map<TopicPartition, OffsetAndMetadata> offsets = Collections.singletonMap(topicPartition, offsetAndMetadata);
-        consumer.commitSync(offsets);
+        consumerWrapper.commitSync(offsets);
     }
 
     private void commitAsync(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {
         Map<TopicPartition, OffsetAndMetadata> offsets = Collections.singletonMap(topicPartition, offsetAndMetadata);
-        consumer.commitAsync(offsets, null);
+        consumerWrapper.commitAsync(offsets, null);
     }
 }

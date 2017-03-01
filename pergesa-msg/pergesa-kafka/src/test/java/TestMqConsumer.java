@@ -1,4 +1,5 @@
 import com.arto.core.bootstrap.MqClient;
+import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.consumer.MqConsumer;
 import com.arto.core.consumer.MqListener;
@@ -12,7 +13,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class TestMqConsumer /*extends DefaultTestCase*/ {
 
     public void testConsumer() {
-        MqConsumer consumer = MqClient.buildConsumer(new KafkaConsumerConfig("pegesa-test-medium", new MqListener<TestMessageBean>() {
+        MqConsumer consumer = MqClient.buildConsumer(new KafkaConsumerConfig("pegesa-test-low", new MqListener<TestMessageBean>() {
             @Override
             public void onMessage(MessageRecord<TestMessageBean> record) {
                 System.out.println("############ Listener onMessage:" + record);
@@ -22,7 +23,7 @@ public class TestMqConsumer /*extends DefaultTestCase*/ {
             public boolean checkRedeliver(MessageRecord<TestMessageBean> record) {
                 return false;
             }
-        }));
+        }, MessagePriorityEnum.HIGH.getCode()));
     }
 
     public static void main(String args[]){

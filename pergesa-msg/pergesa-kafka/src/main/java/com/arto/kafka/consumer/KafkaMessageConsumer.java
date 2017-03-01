@@ -4,9 +4,7 @@ import com.arto.event.util.ThreadUtil;
 import com.arto.kafka.consumer.binding.KafkaConsumerBinding;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -78,8 +76,8 @@ public class KafkaMessageConsumer {
      */
     private class KafkaMessagePollThread implements Runnable{
 
-        /** 消费者 */
-        private KafkaConsumer<String, String> consumer;
+        /** 消费者包装类 */
+        private KafkaConsumerWrapper<String, String> consumerWrapper;
 
         /** 消费者订阅的Topic集合 */
         private final Collection<String> topic;
@@ -94,7 +92,7 @@ public class KafkaMessageConsumer {
          * @param consumer
          */
         public KafkaMessagePollThread(final KafkaConsumer<String, String> consumer){
-            this.consumer = consumer;
+            this.consumerWrapper = new KafkaConsumerWrapper<String, String>(consumer);
             topic = new ArrayList<String>();
         }
 
@@ -110,35 +108,37 @@ public class KafkaMessageConsumer {
             LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue
                     = new LinkedBlockingQueue<List<ConsumerRecord<String, String>>>();
             topicRecords.put(kafkaConsumerBinding.getConfig().getDestination(), topicQueue);
-            // TODO 应改传入封装后的Consumer，隔离一此方法的访问，以后优化
-            kafkaConsumerBinding.start(consumer, topicQueue);
+            // 传入封装后的消费者，使其在多线程环境中同步调用
+            kafkaConsumerBinding.start(consumerWrapper, topicQueue);
             // 更新拉取的Topic
-            consumer.subscribe(topic);
+            consumerWrapper.subscribe(topic);
         }
 
         @Override
         public void run() {
             // 延迟一定时间等系统启动后再开始消费
-            ThreadUtil.sleep(1000, Thread.currentThread(), log);
+            ThreadUtil.sleep(5000, Thread.currentThread(), log);
 
             while (!closeFlag.get()) {
                 synchronized (this) {
                     try {
-                        if (consumer.subscription().size() > 0) {
-                            // 拉取消息
-                            ConsumerRecords<String, String> records = consumer.poll(500);
-                            for (TopicPartition partition : records.partitions()) {
-                                // 将拉取到的消息按Topic分类
-                                topicRecords.get(partition.topic()).put(records.records(partition));
+                        // 拉取消息
+                        List<List<ConsumerRecord<String, String>>> list = consumerWrapper.sequencePoll(100);
+                        if (list.size() > 0) {
+                            for (List<ConsumerRecord<String, String>> records : list) {
+                                // 将拉取到的消息按Topic分类消费
+                                if (records.size() > 0) {
+                                    topicRecords.get(records.get(0).topic()).put(records);
+                                }
                             }
-                            System.out.println("####### poll topic:" + consumer.subscription() + ", message size:" + records.count());
                         }
                     } catch (Throwable e) {
-                        log.warn("poll message failed.", e);
+                        log.warn("Kafka poll message failed.", e);
                     }
                 }
-                // TODO TEST 休眠5000毫秒
-                ThreadUtil.sleep(5000, Thread.currentThread(), log);
+
+                // TODO TEST 休眠1000毫秒
+                ThreadUtil.sleep(500, Thread.currentThread(), log);
             }
         }
     }

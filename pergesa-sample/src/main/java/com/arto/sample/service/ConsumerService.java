@@ -14,16 +14,16 @@ public class ConsumerService {
 
     @Consumer(destination = "pegesa-test", priority = MessagePriorityEnum.HIGH)
     public void consumerHigh(MessageRecord<OrderDO> message){
-        System.out.println("ConsumerService consumer message:" + message);
+        // System.out.println("ConsumerService.consumerHigh message:" + message);
     }
 
     @Consumer(destination = "pegesa-test-medium", priority = MessagePriorityEnum.MEDIUM)
     public void consumerMedium(MessageRecord<OrderDO> message){
-        System.out.println("ConsumerService consumer message:" + message);
+        // System.out.println("ConsumerService.consumerMedium message:" + message);
     }
 
     @Consumer(destination = "pegesa-test-low", priority = MessagePriorityEnum.LOW)
     public void consumerLow(MessageRecord<OrderDO> message){
-        System.out.println("ConsumerService consumer message:" + message);
+        // System.out.println("ConsumerService.consumerLow message:" + message);
     }
 }

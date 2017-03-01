@@ -40,7 +40,7 @@
         <log4j.version>1.2.17</log4j.version>
         <fastjson.version>1.2.14</fastjson.version>
         <idcenter.version>2.2.2</idcenter.version>
-        <kafka.version>0.10.1.1</kafka.version>
+        <kafka.version>0.10.2.0</kafka.version>
         <activemq.version>5.14.2</activemq.version>
         <httpclient.version>4.5.2</httpclient.version>
         <javassist.version>3.20.0-GA</javassist.version>
