@@ -1,6 +1,5 @@
 package com.arto.kafka.consumer;
 
-import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.exception.MqClientException;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.consumer.strategy.KafkaConsumerStrategyFactory;
@@ -31,6 +30,9 @@ public class KafkaConsumerThread implements Callable{
     /** Topic拉取的消息(单个分区) */
     private List<ConsumerRecord<String, String>> records;
 
+    /** 当前已消费数据 */
+    private ConsumerRecord<String, String> currentConsumedRecord;
+
     public KafkaConsumerThread(final KafkaConsumerWrapper<String, String> consumerWrapper, final KafkaConsumerConfig config
             , final List<ConsumerRecord<String, String>> records) {
         this.consumerWrapper = consumerWrapper;
@@ -39,34 +41,55 @@ public class KafkaConsumerThread implements Callable{
     }
 
     @Override
-    public Object call() throws Exception {
+    public Boolean call() throws Exception {
         TopicPartition topicPartition = null;
-
+        ConsumerRecord<String, String> record;
         try {
-            for (ConsumerRecord<String, String> record : records) {
-                log.debug("Kafka consume message:" + record);
+            for (int i = 0; i < records.size(); i++) {
+                record = records.get(i);
                 if (topicPartition == null) {
                     topicPartition = new TopicPartition(record.topic(), record.partition());
                 }
                 // 处理消息
                 KafkaConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, record);
-                // 提交消费标识 TODO 消息标识批量提交
-                if (config.getPriority() != MessagePriorityEnum.LOW.getCode()) {
-                    commitSync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
-                } else {
-                    // 大量异步提交时报coordinator unavailable？？ 所以低优先级走自动提交..
-                    // commitAsync(topicPartition, new OffsetAndMetadata(record.offset() + 1));
+                log.debug("Kafka consume message:" + record);
+
+                // 提交消费标识
+                currentConsumedRecord = record;
+                //if (config.getPriority() != MessagePriorityEnum.LOW.getCode()) {
+                if (i % config.getAckSize() == 0 || i == records.size() - 1) {
+                    commitSync(topicPartition, new OffsetAndMetadata(currentConsumedRecord.offset() + 1));
                 }
+                //} else {
+                    // 大量异步提交时报coordinator unavailable？？ 所以低优先级走自动提交..
+                    // commitAsync(topicPartition, new OffsetAndMetadata(currentConsumedRecord.offset() + 1));
+                //}
             }
 
-            consumerWrapper.resume(Collections.singleton(topicPartition));
-            log.info("Kafka consumer resume:" + topicPartition + ", thread:" + Thread.currentThread().getName());
+            resume(topicPartition);
         } catch (Throwable t) {
             log.warn("Kafka message consume failed", t);
             throw new MqClientException(t);
         }
 
-        return null;
+        return true;
+    }
+
+    /**
+     * 立即提交消费标识
+     */
+    public void commitOffsetImmediately(){
+        if (currentConsumedRecord == null) return;
+
+        commitSync(new TopicPartition(currentConsumedRecord.topic()
+                , currentConsumedRecord.partition())
+                , new OffsetAndMetadata(currentConsumedRecord.offset() + 1));
+    }
+
+    private void resume(TopicPartition topicPartition){
+        currentConsumedRecord = null;
+        consumerWrapper.resume(Collections.singleton(topicPartition));
+        log.info("Kafka consumer resume:" + topicPartition + ", thread:" + Thread.currentThread().getName());
     }
 
     private void commitSync(TopicPartition topicPartition, OffsetAndMetadata offsetAndMetadata) {

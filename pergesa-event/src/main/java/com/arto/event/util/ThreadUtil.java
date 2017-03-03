@@ -7,11 +7,17 @@ import org.slf4j.Logger;
  */
 public class ThreadUtil {
 
-    public static void sleep(long millis, Thread thread, Logger log) {
+    public static void sleep(long millis) {
+        sleep(millis, null);
+    }
+
+    public static void sleep(long millis, Logger log) {
         try {
-            thread.sleep(millis);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
-            log.warn("Consumer thread interrupted.", e);
+            if (log != null) {
+                log.warn("Thread interrupted.", e);
+            }
         }
     }
 }

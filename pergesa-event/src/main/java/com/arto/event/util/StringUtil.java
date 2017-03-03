@@ -1,12 +1,12 @@
 package com.arto.event.util;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.util.Collection;
 import java.util.Iterator;
-
 /**
  * Created by xiong.j on 2017/1/25.
  */
@@ -25,8 +25,18 @@ public class StringUtil {
         return var2.toString();
     }
 
-    public static String checkSize(String value, int maxSize) throws Exception {
+    public static String checkSize(Object obj, int maxSize) throws Exception {
+        if (obj == null) return "";
+
+        String value = "";
+        if (obj instanceof String) {
+            value = (String)obj;
+        } else {
+            value = JSON.toJSONString(obj);
+        }
+
         if (Strings.isNullOrEmpty(value)) return "";
+
         if (value.getBytes("utf-8").length <= maxSize) {
             return value;
         }

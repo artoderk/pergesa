@@ -24,4 +24,10 @@ public interface Constants {
     SimpleDateFormat DEFAULT_SDF = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     int MAX_RECOVERY_DAYS = 7;
+
+    /** 默认报告的目的地 */
+    String REPORT_DEST = "pergesa-event-failed-report";
+
+    /** 默认报告的事件类型 */
+    String REPORT_EVENT = "com.arto.kafka.event.KafkaReportEvent";
 }

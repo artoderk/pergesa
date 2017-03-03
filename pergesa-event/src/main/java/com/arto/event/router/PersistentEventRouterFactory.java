@@ -30,6 +30,7 @@ public class PersistentEventRouterFactory {
         return getInstance(getEventClass(eventInfo));
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> T getInstance(Class<?> clazz) throws Throwable {
         if (clazz == null) {
             return null;

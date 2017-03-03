@@ -15,8 +15,8 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class KafkaConsumerConfig extends ConsumerConfig {
 
-    /** 并发线程数量 */
-    private int numThreads;
+    /** 批量提交消费标识大小 */
+    private int ackSize = 5;
 
     public KafkaConsumerConfig(String destination) {
         this.setType(MqTypeEnum.KAFKA);

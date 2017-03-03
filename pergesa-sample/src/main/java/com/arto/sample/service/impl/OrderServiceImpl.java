@@ -1,6 +1,7 @@
 package com.arto.sample.service.impl;
 
 import com.arto.core.annotation.Producer;
+import com.arto.core.annotation.TxMessage;
 import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.producer.MqCallback;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderServiceImpl implements OrderService{
 
     @Producer(destination = "pegesa-test", priority = MessagePriorityEnum.HIGH)
-    private MqProducer producer;
+    private MqProducer<OrderDO> producer;
 
 //    private KafkaProducerConfig config = new KafkaProducerConfig("pegesa-test", MessagePriorityEnum.HIGH);
 //    private MqProducer producer = MqClient.buildProducer(config);
@@ -28,6 +29,7 @@ public class OrderServiceImpl implements OrderService{
     private OrderDao dao;
 
     @Override
+    @TxMessage
     @Transactional
     public boolean addOrder(OrderDO orderDO) {
         int result = dao.addOrder(orderDO);
@@ -36,20 +38,20 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @Override
-    //@Transactional
+    @Transactional
     public boolean cancelOrder(OrderDO orderDO){
         return 0 < dao.deleteOrder(orderDO);
     }
 
     private void sendMessage(OrderDO orderDO) {
-        producer.send(new MessageRecord<OrderDO>("bid01", "btype01", orderDO));
+        producer.send(new MessageRecord<OrderDO>("oid" + orderDO.getOrderId(), "order", orderDO));
     }
 
     private class OrderCallback implements MqCallback<OrderDO>{
 
         @Override
         public void onCompletion(OrderDO orderDO) {
-            System.out.println(orderDO.toString());
+            System.out.println("callback:" + orderDO.toString());
         }
     }
 }

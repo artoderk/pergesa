@@ -13,6 +13,7 @@ import com.arto.core.producer.MqProducer;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.producer.binding.KafkaProducerConfig;
 import com.google.common.base.Strings;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
@@ -26,6 +27,7 @@ import java.lang.reflect.Type;
 /**
  * Created by xiong.j on 2017/2/17.
  */
+@Slf4j
 @Component
 public class KafkaAnnotationParse extends MqAnnotationParse {
 
@@ -59,7 +61,7 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
             if (isKafka(annotation.type())) {
                 String topic = StringUtils.trimWhitespace(annotation.destination());
                 if (Strings.isNullOrEmpty(topic)) {
-                    throw new MqClientException("@Producer's topic is required [" + field + "]");
+                    throw new MqClientException("@Producer's [topic] is required [" + field + "]");
                 }
 
                 // 实例化Callback
@@ -73,7 +75,7 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
                     try {
                         callback = (MqCallback) c.newInstance(bean);
                     } catch (Exception e) {
-                        throw new MqClientException("@Producer's callback can't initialzation.");
+                        throw new MqClientException("@Producer's [callback] can't initialzation.");
                     }
                 }
 
@@ -86,9 +88,13 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
                 if (annotation.priority() == MessagePriorityEnum.HIGH) {
                     config.setTransaction(true);
                 }
-                MqProducer mqProducer = MqClient.buildProducer(config);
-                ReflectionUtils.makeAccessible(field);
-                ReflectionUtils.setField(field, bean, mqProducer);
+                try {
+                    MqProducer mqProducer = MqClient.buildProducer(config);
+                    ReflectionUtils.makeAccessible(field);
+                    ReflectionUtils.setField(field, bean, mqProducer);
+                } catch (Throwable t) {
+                    throw new MqClientException("Create producer failed. config:" + config);
+                }
             }
         }
     }
@@ -97,19 +103,20 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
         Consumer annotation = method.getAnnotation(Consumer.class);
         if (annotation != null) {
             if (isKafka(annotation.type())) {
+                // 主题
                 String topic = StringUtils.trimWhitespace(annotation.destination());
                 if (Strings.isNullOrEmpty(topic)) {
-                    throw new MqClientException("@Consumer's topic is required [" + method + "]");
+                    throw new MqClientException("@Consumer's [topic] is required [" + method + "]");
                 }
-
+                // 选择器
                 String selectKey = StringUtils.trimWhitespace(annotation.selectKey());
 
                 Type[] types = method.getGenericParameterTypes();
                 if (types.length != 1 && !MessageRecord.class.isAssignableFrom(types[0].getClass())) {
-                    throw new MqClientException("@Consumer method [" + method + "] should only have 1 parameter and which type supposed to be MessageRecord<?>");
+                    throw new MqClientException("@Consumer's method [" + method + "] should only have 1 parameter and which type supposed to be MessageRecord<?>");
                 }
                 if (!method.getParameterTypes()[0].equals(MessageRecord.class)) {
-                    throw new MqClientException("@Consumer method [" + method + "] should only to be MessageRecord<?> ");
+                    throw new MqClientException("@Consumer's method [" + method + "] should only to be MessageRecord<?> ");
                 }
 
                 // 重复注解
@@ -118,6 +125,19 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
                     throw new MqClientException("Duplicated definition: @Consumer(type=kafka" + "', topic='" + topic + "', selectKey='" + selectKey + "')");
                 }
 
+                // 线程池大小
+                int numThreads = annotation.numThreads();
+                if (numThreads <= 0) {
+                    throw new MqClientException("@Consumer's [numThreads] is invalid.");
+                }
+
+                // 批量提交消费标识大小
+                int ackSize = annotation.ackSize();
+                if (ackSize <= 0) {
+                    throw new MqClientException("@Consumer's [ackSize] is invalid.");
+                }
+
+                // 去重检测
                 String checkRedeliver = annotation.checkRedeliver();
 
                 // 绑定消费者
@@ -126,7 +146,13 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
                 config.setBean(bean);
                 config.setMethod(method);
                 config.setCheckRedeliver(checkRedeliver);
-                MqClient.buildConsumer(config);
+                config.setNumThreads(numThreads);
+                config.setAckSize(ackSize);
+                try {
+                    MqClient.buildConsumer(config);
+                } catch (Throwable t) {
+                    throw new MqClientException("Create consumer failed. config:" + config);
+                }
             }
         }
     }

@@ -3,6 +3,7 @@ package com.arto.kafka.consumer;
 import com.arto.event.util.ThreadUtil;
 import com.arto.kafka.consumer.binding.KafkaConsumerBinding;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
+ * TODO 目前为一个消费者对应多个TOPIC，如果TOPIC太多会造成严重的线程竞争，可能需改为一个TOPIC对应一消费者
+ *
  * Created by xiong.j on 2017/1/16.
  */
 @Slf4j
@@ -51,7 +54,7 @@ public class KafkaMessageConsumer {
      *
      * @param kafkaConsumerBinding
      */
-    public void subscribe(final KafkaConsumerBinding kafkaConsumerBinding) {
+    public void subscribe(final KafkaConsumerBinding kafkaConsumerBinding, ConsumerRebalanceListener listener) {
         if (pollThread == null) {
             synchronized (this){
                 if (pollThread == null) {
@@ -59,7 +62,7 @@ public class KafkaMessageConsumer {
                 }
             }
         }
-        pollThread.subscribe(kafkaConsumerBinding);
+        pollThread.subscribe(kafkaConsumerBinding, listener);
     }
 
     /**
@@ -91,7 +94,7 @@ public class KafkaMessageConsumer {
          *
          * @param consumer
          */
-        public KafkaMessagePollThread(final KafkaConsumer<String, String> consumer){
+        KafkaMessagePollThread(final KafkaConsumer<String, String> consumer){
             this.consumerWrapper = new KafkaConsumerWrapper<String, String>(consumer);
             topic = new ArrayList<String>();
         }
@@ -101,7 +104,7 @@ public class KafkaMessageConsumer {
          *
          * @param kafkaConsumerBinding
          */
-        public synchronized void subscribe(KafkaConsumerBinding kafkaConsumerBinding) {
+        synchronized void subscribe(KafkaConsumerBinding kafkaConsumerBinding, ConsumerRebalanceListener listener) {
             // 更新订阅的Topic集合
             topic.add(kafkaConsumerBinding.getConfig().getDestination());
             // 初始化Topic消费线程
@@ -111,13 +114,13 @@ public class KafkaMessageConsumer {
             // 传入封装后的消费者，使其在多线程环境中同步调用
             kafkaConsumerBinding.start(consumerWrapper, topicQueue);
             // 更新拉取的Topic
-            consumerWrapper.subscribe(topic);
+            consumerWrapper.subscribe(topic, listener);
         }
 
         @Override
         public void run() {
             // 延迟一定时间等系统启动后再开始消费
-            ThreadUtil.sleep(5000, Thread.currentThread(), log);
+            ThreadUtil.sleep(5000, log);
 
             while (!closeFlag.get()) {
                 synchronized (this) {
@@ -137,8 +140,8 @@ public class KafkaMessageConsumer {
                     }
                 }
 
-                // TODO TEST 休眠1000毫秒
-                ThreadUtil.sleep(500, Thread.currentThread(), log);
+                // 休眠300毫秒，减少offset提交时的线程竞争
+                ThreadUtil.sleep(300, log);
             }
         }
     }

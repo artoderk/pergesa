@@ -2,7 +2,9 @@ package com.arto.event.service;
 
 import com.alibaba.fastjson.JSON;
 import com.arto.event.bootstrap.Event;
+import com.arto.event.bootstrap.EventBusFactory;
 import com.arto.event.bootstrap.EventContext;
+import com.arto.event.common.Constants;
 import com.arto.event.common.EventStatusEnum;
 import com.arto.event.config.ConfigManager;
 import com.arto.event.exception.EventException;
@@ -77,7 +79,9 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             try {
                 // 手动加锁
                 return eventStorage.lockById(eventInfo.getId());
-            } catch (Exception e){
+                /** } catch (EmptyResultDataAccessException empty) {
+                ThreadUtil.sleep(100); */
+            } catch (Exception e) {
                 if (e.getMessage().contains("ORA-00054")
                         || e.getMessage().contains("could not obtain lock")) {
                     // Oracle和Postgresql环境下获取锁失败Exception
@@ -101,9 +105,8 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             retry(eventInfo);
         }
         if (eventInfo.getCurrentRetriedCount() == eventInfo.getDefaultRetriedCount()) {
-            // TODO 超过重试次数的Event通过MQ发送到后管系统
-            // EventBusFactory.getInstance().post();
-
+            // 通过MQ发送到后管系统
+            report(eventInfo);
             // 更新处理状态为 "3:等待人工处理"
             EventInfo updInfo = new EventInfo();
             updInfo.setId(eventInfo.getId());
@@ -157,6 +160,17 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             // 采用悲观锁或其它情况下的更新操作
             eventStorage.update(updInfo);
         }
+    }
+
+    private void report(EventInfo eventInfo){
+        Event<EventInfo> event = new Event<EventInfo>();
+        event.setPayload(eventInfo);
+        try {
+            event.setGroup(Class.forName(Constants.REPORT_EVENT));
+        } catch (ClassNotFoundException e) {
+            throw new EventException("Report failed.", e);
+        }
+        EventBusFactory.getInstance().post(event);
     }
 
     private EventInfo event2Info(Event event, String type) throws Exception {

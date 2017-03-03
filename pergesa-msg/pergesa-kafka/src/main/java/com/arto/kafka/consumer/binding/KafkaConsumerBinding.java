@@ -7,8 +7,13 @@ import com.arto.kafka.consumer.KafkaConsumerThread;
 import com.arto.kafka.consumer.KafkaConsumerWrapper;
 import com.arto.kafka.consumer.KafkaMessageConsumer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.TopicPartition;
 
+import java.lang.ref.WeakReference;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -27,16 +32,19 @@ public class KafkaConsumerBinding implements MqConsumer {
     /** Kafka消费者 */
     private final KafkaMessageConsumer consumer;
 
-    /** 消息消费线程关闭Flag */
+    /** 消费线程关闭Flag */
     private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 
-    /** 消息消费线程 */
+    /** 消费线程 */
     private volatile ConsumerWithTopicThread localThread;
+
+    /** 消费者重分配监听器 */
+    private final HandleRebalanceListener rebalanceListener = new HandleRebalanceListener();
 
     public KafkaConsumerBinding(KafkaConsumerConfig config) {
         this.config = config;
         this.consumer = SpringContextHolder.getBean("kafkaMessageConsumer");
-        consumer.subscribe(this);
+        consumer.subscribe(this, rebalanceListener);
     }
 
     @Override
@@ -44,7 +52,7 @@ public class KafkaConsumerBinding implements MqConsumer {
     public void receive(Class type, MqListener listener) {
         //config.setDeserializer(type);
         config.setListener(listener);
-        consumer.subscribe(this);
+        consumer.subscribe(this, rebalanceListener);
     }
 
     @Override
@@ -53,7 +61,7 @@ public class KafkaConsumerBinding implements MqConsumer {
         //config.setDeserializer(type);
         config.setListener(listener);
         config.setNumThreads(numThreads);
-        consumer.subscribe(this);
+        consumer.subscribe(this, rebalanceListener);
     }
 
     /**
@@ -71,7 +79,7 @@ public class KafkaConsumerBinding implements MqConsumer {
     }
 
     /**
-     * 关闭
+     * 关闭消费线程
      */
     public void close() {
         if (localThread != null) {
@@ -89,6 +97,12 @@ public class KafkaConsumerBinding implements MqConsumer {
         return config;
     }
 
+    private void commitOffsetImmediately(){
+        if (localThread != null) {
+            localThread.commitOffsetImmediately();
+        }
+    }
+
     /**
      * Topic消息处理线程
      */
@@ -103,20 +117,24 @@ public class KafkaConsumerBinding implements MqConsumer {
         /** 消息处理线程池 */
         private ThreadPoolExecutor executor;
 
+        /** 消息处理线程列表 */
+        private List<WeakReference<KafkaConsumerThread>> threadList;
+
         /**
          * Topic消息的处理线程
          *
          * @param consumerWrapper
          * @param topicQueue
          */
-        public ConsumerWithTopicThread(final KafkaConsumerWrapper<String, String> consumerWrapper
+        ConsumerWithTopicThread(final KafkaConsumerWrapper<String, String> consumerWrapper
                 , final LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue) {
             this.consumerWrapper = consumerWrapper;
             this.topicQueue = topicQueue;
-            executor = new ThreadPoolExecutor(3, 3,
+            executor = new ThreadPoolExecutor(config.getNumThreads(), config.getNumThreads(),
                     0L, TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<Runnable>(),
                     new ThreadPoolExecutor.CallerRunsPolicy());
+            threadList = new LinkedList<WeakReference<KafkaConsumerThread>>();
         }
 
         @Override
@@ -125,12 +143,12 @@ public class KafkaConsumerBinding implements MqConsumer {
                 List<ConsumerRecord<String, String>> records;
                 try {
                     // 获取拉取到的消息
-                    records = topicQueue.poll(50, TimeUnit.MILLISECONDS);
+                    records = topicQueue.poll(200, TimeUnit.MILLISECONDS);
                     if (records != null) {
                         // 将消息按分区消息
-                        executor.submit(new KafkaConsumerThread(consumerWrapper, config, records));
-                        System.out.println("Thread pool active: " + executor.getActiveCount());
+                        executor.submit(createConsumerThread(records));
                     }
+
                 } catch (InterruptedException e) {
                     log.warn("ConsumerWithTopicThread interrupted. ", e);
                 } catch (Throwable e) {
@@ -140,11 +158,46 @@ public class KafkaConsumerBinding implements MqConsumer {
         }
 
         /**
+         * 立即提交消费标识
+         */
+        void commitOffsetImmediately(){
+            for (WeakReference<KafkaConsumerThread> weakReference : threadList) {
+                KafkaConsumerThread thread = weakReference.get();
+                if (thread != null) {
+                    thread.commitOffsetImmediately();
+                }
+            }
+        }
+
+        /**
          * 销毁线程池
          */
-        public void destroy() {
+        void destroy() {
             log.info("Kafka consumer thread pool is destroyed. topic=" + config.getDestination());
             executor.shutdown();
         }
+
+        private KafkaConsumerThread createConsumerThread(List<ConsumerRecord<String, String>> records){
+            KafkaConsumerThread thread = new KafkaConsumerThread(consumerWrapper, config, records);
+            threadList.add(new WeakReference<KafkaConsumerThread>(thread));
+            return thread;
+        }
+
     }
+
+    private class HandleRebalanceListener implements ConsumerRebalanceListener {
+
+        @Override
+        public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+            commitOffsetImmediately();
+            log.info("Before rebalance, commit offset once. topic:" + config.getDestination());
+        }
+
+        @Override
+        public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+
+        }
+
+    }
+
 }

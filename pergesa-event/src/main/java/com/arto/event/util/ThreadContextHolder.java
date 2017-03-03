@@ -15,4 +15,7 @@ public abstract class ThreadContextHolder {
         ctxHolder.set(object);
     }
 
+    public static void clear(){
+        ctxHolder.remove();
+    }
 }

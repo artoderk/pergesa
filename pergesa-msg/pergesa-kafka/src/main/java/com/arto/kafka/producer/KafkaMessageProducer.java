@@ -50,7 +50,7 @@ public class KafkaMessageProducer {
 
         try {
             // 序列化消息 并检测是否超过1M
-            String payload = StringUtil.checkSize(JSON.toJSONString(event.getPayload()), 1048576);
+            String payload = StringUtil.checkSize(event.getPayload(), 1048576);
             if (event.getPartition() == -1) {
                 // 没有设置分区
                 if (Strings.isNullOrEmpty(event.getKey())) {

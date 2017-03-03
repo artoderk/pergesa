@@ -36,4 +36,8 @@ public class ConsumerConfig extends MqConfig{
 
     /** 去重方法名(使用注解时代替MqListener) */
     private String checkRedeliver;
+
+    /** 并发线程数量 */
+    private int numThreads = 2;
+
 }

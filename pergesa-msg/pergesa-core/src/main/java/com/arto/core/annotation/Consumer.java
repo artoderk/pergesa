@@ -30,4 +30,10 @@ public @interface Consumer {
     // 去重方法名
     String checkRedeliver() default "";
 
+    // 线程池大小
+    int numThreads() default 2;
+
+    // 批量提交消费标识大小
+    int ackSize() default 5;
+
 }

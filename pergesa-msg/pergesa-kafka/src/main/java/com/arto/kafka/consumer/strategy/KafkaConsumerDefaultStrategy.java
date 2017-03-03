@@ -73,7 +73,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
                     infiniteRetry(record, message);
                 } else {
                     // 消息处理错误，暂停处理一小会
-                    ThreadUtil.sleep(5000, Thread.currentThread(), log);
+                    ThreadUtil.sleep(5000, log);
                 }
             }
         }
@@ -92,7 +92,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
                 log.warn("Persist message failed, waiting for retry. record=" + record, e);
             }
             // 持久化消息错误，暂停处理一小会
-            ThreadUtil.sleep(5000, Thread.currentThread(), log);
+            ThreadUtil.sleep(5000, log);
         }
         log.info("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
     }

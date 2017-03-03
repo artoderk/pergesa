@@ -14,7 +14,7 @@ public class Test {
     }
 
     public static void main(String args[]){
-//        Test t = new Test();
+        Test t = new Test();
 //        long time = System.currentTimeMillis();
 //        Date date = new Date(time);
 //        Timestamp timestamp = new Timestamp(time);

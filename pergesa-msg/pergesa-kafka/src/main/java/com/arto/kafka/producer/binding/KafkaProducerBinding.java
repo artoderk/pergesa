@@ -3,6 +3,7 @@ package com.arto.kafka.producer.binding;
 import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.exception.MqClientException;
+import com.arto.core.intercepter.TxMessageContextHolder;
 import com.arto.core.producer.MqProducer;
 import com.arto.event.bootstrap.EventBusFactory;
 import com.arto.event.service.PersistentEventService;
@@ -98,8 +99,9 @@ public class KafkaProducerBinding implements MqProducer {
         if (event.isPersistent()) {
             // 持久化消息直接持久化(模拟客户端两阶段提交)
             service.persist(event, Constants.KAFKA_EVENT_BEAN);
-            // 加入Queue等待处理(避免定时调度的延迟，调度默认10分钟执行一次)
-            eventQueue.offer(event);
+            // 加入线程上下文，等待事务正常结束后加入发送Queue处理(避免定时调度的延迟，调度默认10分钟执行一次)
+            TxMessageContextHolder.setTxMessage(event);
+            System.out.println("@@@Thread:" + Thread.currentThread());
         } else {
             // 非持久化消息直接发送
             EventBusFactory.getInstance().post(event);
@@ -164,7 +166,7 @@ public class KafkaProducerBinding implements MqProducer {
         public void run() {
             while (!closeFlag.get()) {
                 try {
-                    KafkaProduceEvent event = eventQueue.poll(1000, TimeUnit.MILLISECONDS);
+                    KafkaProduceEvent event = eventQueue.poll(300, TimeUnit.MILLISECONDS);
                     if (event != null) {
                         EventBusFactory.getInstance().post(event);
                     }
