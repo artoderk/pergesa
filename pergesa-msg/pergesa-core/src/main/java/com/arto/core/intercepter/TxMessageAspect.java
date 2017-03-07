@@ -74,7 +74,11 @@ public class TxMessageAspect implements Ordered, ResourceLoaderAware, Applicatio
                                     if ("commit".equals(method.getName())) {
                                         List<MqEvent> txMessages = TxMessageContextHolder.getTxMessages();
                                         if (txMessages != null) {
-                                            MqClient.getPipeline(txMessages.get(0).getType()).offerAll(txMessages);
+                                            MqEvent message;
+                                            for (int i = 0; i < txMessages.size(); i++) {
+                                                message = txMessages.get(i);
+                                                MqClient.getPipeline(message.getType()).offer(message);
+                                            }
                                         }
                                         TxMessageContextHolder.clear();
                                     } else if ("rollback".equals(method.getName())) {
