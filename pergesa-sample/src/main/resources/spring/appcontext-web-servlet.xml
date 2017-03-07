@@ -4,11 +4,16 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:reg="http://www.dangdang.com/schema/ddframe/reg"
+       xmlns:job="http://www.dangdang.com/schema/ddframe/job"
        xsi:schemaLocation="
 	     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
 	     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
 		 http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
-		 http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+		 http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		 http://www.dangdang.com/schema/ddframe/reg http://www.dangdang.com/schema/ddframe/reg/reg.xsd
+         http://www.dangdang.com/schema/ddframe/job http://www.dangdang.com/schema/ddframe/job/job.xsd
+    ">
     <description>Spring公共配置</description>
 
 
@@ -30,9 +35,21 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+    <reg:zookeeper id="regCenter" serverLists="${serverLists}"
+                   namespace="${namespace}"
+                   baseSleepTimeMilliseconds="${baseSleepTimeMilliseconds}"
+                   maxSleepTimeMilliseconds="${maxSleepTimeMilliseconds}"
+                   maxRetries="${maxRetries}"  />
 
     <import resource="classpath:pergesa-event.xml"/>
     <import resource="appcontext-service-db.xml" />
     <import resource="appcontext-service-dao.xml" />
 
+    <!--Test 10条/1秒的速度不间断发送消息 -->
+    <!--<job:bean id="testPerformanceJob" class="com.arto.sample.job.TestPerformanceJob" regCenter="regCenter"
+              shardingTotalCount="1"
+              cron="*/1 * * * * ?"
+              failover="false"
+              monitorExecution="false"
+              description="Persistent event recovery job" />-->
 </beans>

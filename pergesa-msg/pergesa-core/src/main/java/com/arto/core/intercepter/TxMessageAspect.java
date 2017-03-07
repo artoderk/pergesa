@@ -1,5 +1,7 @@
 package com.arto.core.intercepter;
 
+import com.arto.core.bootstrap.MqClient;
+import com.arto.core.event.MqEvent;
 import com.arto.core.exception.MqClientException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -59,9 +61,9 @@ public class TxMessageAspect implements Ordered, ResourceLoaderAware, Applicatio
         // 监控事务提交状态
         Method setterMethod= ReflectionUtils.findMethod(ConnectionHolder.class, "setConnection", Connection.class);
         ReflectionUtils.makeAccessible(setterMethod);
+        // 重写commit方法
         ReflectionUtils.invokeMethod(setterMethod, conHolder,
                 Proxy.newProxyInstance(resourceLoader.getClassLoader(),
-                        // 重写commit方法
                         new Class<?>[]{Connection.class}, new InvocationHandler() {
                             @Override
                             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -70,10 +72,9 @@ public class TxMessageAspect implements Ordered, ResourceLoaderAware, Applicatio
                                 }finally {
                                     // 确保在commit执行后将事务消息加入发送队列中，加快发送速度
                                     if ("commit".equals(method.getName())) {
-                                        List<Object> txMessages = TxMessageContextHolder.getTxMessages();
+                                        List<MqEvent> txMessages = TxMessageContextHolder.getTxMessages();
                                         if (txMessages != null) {
-                                            System.out.println("@@@@Tx msg handle jdbc commit.");
-                                            // eventQueue.offer(event); // TODO 加入发送Queue
+                                            MqClient.getPipeline(txMessages.get(0).getType()).offerAll(txMessages);
                                         }
                                         TxMessageContextHolder.clear();
                                     } else if ("rollback".equals(method.getName())) {

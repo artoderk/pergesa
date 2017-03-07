@@ -65,6 +65,8 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
                 if (!checkRedeliver(config, message)) {
                     // 消费消息
                     onMessage(config, message);
+                } else {
+                    log.info("Discard redelivered message:" + message);
                 }
                 break;
             } catch (Throwable e) {

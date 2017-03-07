@@ -93,7 +93,7 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
                     ReflectionUtils.makeAccessible(field);
                     ReflectionUtils.setField(field, bean, mqProducer);
                 } catch (Throwable t) {
-                    throw new MqClientException("Create producer failed. config:" + config);
+                    throw new MqClientException("Create producer failed. config:" + config, t);
                 }
             }
         }
@@ -151,7 +151,7 @@ public class KafkaAnnotationParse extends MqAnnotationParse {
                 try {
                     MqClient.buildConsumer(config);
                 } catch (Throwable t) {
-                    throw new MqClientException("Create consumer failed. config:" + config);
+                    throw new MqClientException("Create consumer failed. config:" + config, t);
                 }
             }
         }

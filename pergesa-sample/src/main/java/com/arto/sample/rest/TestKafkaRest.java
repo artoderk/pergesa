@@ -1,9 +1,8 @@
 package com.arto.sample.rest;
 
+import com.alibaba.fastjson.JSON;
 import com.arto.core.annotation.Producer;
 import com.arto.core.common.MessagePriorityEnum;
-import com.arto.core.common.MessageRecord;
-import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.arto.sample.domain.OrderDO;
 import com.arto.sample.service.OrderService;
@@ -171,22 +170,28 @@ public class TestKafkaRest {
 
     public static void main(String args[]) throws Exception{
         TestKafkaRest t = new TestKafkaRest();
-        t.mediumProducer = new MqProducer<OrderDO>() {
-            @Override
-            public void send(OrderDO message) throws MqClientException {
-                System.out.println("Thread:" + Thread.currentThread().getName() + ", message:" + message);
-            }
+//        t.mediumProducer = new MqProducer<OrderDO>() {
+//            @Override
+//            public void send(OrderDO message) throws MqClientException {
+//                System.out.println("Thread:" + Thread.currentThread().getName() + ", message:" + message);
+//            }
+//
+//            @Override
+//            public void send(MessageRecord<OrderDO> record) throws MqClientException {
+//
+//            }
+//
+//            @Override
+//            public void sendNonTx(MessageRecord<OrderDO> record) throws MqClientException {
+//
+//            }
+//        };
+//        t.threadTest(2, 5, 10);
 
-            @Override
-            public void send(MessageRecord<OrderDO> record) throws MqClientException {
-
-            }
-
-            @Override
-            public void sendNonTx(MessageRecord<OrderDO> record) throws MqClientException {
-
-            }
-        };
-        t.threadTest(2, 5, 10);
+        OrderDO bean = new OrderDO();
+        bean.setOrderId(1);
+        bean.setStatus("OrderDO.test");
+        bean.setOrderId(726319);
+        System.out.println(JSON.toJSONString(bean).getBytes("utf-8").length);
     }
 }

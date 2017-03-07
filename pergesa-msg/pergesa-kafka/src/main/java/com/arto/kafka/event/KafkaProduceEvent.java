@@ -1,5 +1,6 @@
 package com.arto.kafka.event;
 
+import com.arto.core.common.MqTypeEnum;
 import com.arto.core.event.MqEvent;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,5 +19,9 @@ public class KafkaProduceEvent extends MqEvent {
 
     /** 分区 */
     private int partition = -1;
+
+    public KafkaProduceEvent(){
+        this.setType(MqTypeEnum.KAFKA.getMemo());
+    }
 
 }

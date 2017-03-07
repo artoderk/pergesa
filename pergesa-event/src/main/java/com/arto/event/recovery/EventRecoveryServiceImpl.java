@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 事件恢复服务
+ * 持久化事件恢复服务
+ * 默认恢复7天前的数据，新事件默认延迟10分钟, 一次默认取1000条
  *
  * Created by xiong.j on 2017/1/4.
  */

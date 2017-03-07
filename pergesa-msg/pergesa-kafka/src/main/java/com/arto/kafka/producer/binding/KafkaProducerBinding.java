@@ -1,7 +1,11 @@
 package com.arto.kafka.producer.binding;
 
+import com.arto.core.bootstrap.MqClient;
+import com.arto.core.common.DataPipeline;
 import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
+import com.arto.core.common.MqTypeEnum;
+import com.arto.core.event.MqEvent;
 import com.arto.core.exception.MqClientException;
 import com.arto.core.intercepter.TxMessageContextHolder;
 import com.arto.core.producer.MqProducer;
@@ -13,8 +17,6 @@ import com.arto.kafka.common.KMessageRecord;
 import com.arto.kafka.event.KafkaProduceEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,8 +27,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Slf4j
 public class KafkaProducerBinding implements MqProducer {
-
-    private static final BlockingQueue<KafkaProduceEvent> eventQueue = new LinkedBlockingQueue<KafkaProduceEvent>(10000);
 
     private static final AtomicBoolean closeFlag = new AtomicBoolean(false);
 
@@ -101,7 +101,6 @@ public class KafkaProducerBinding implements MqProducer {
             service.persist(event, Constants.KAFKA_EVENT_BEAN);
             // 加入线程上下文，等待事务正常结束后加入发送Queue处理(避免定时调度的延迟，调度默认10分钟执行一次)
             TxMessageContextHolder.setTxMessage(event);
-            System.out.println("@@@Thread:" + Thread.currentThread());
         } else {
             // 非持久化消息直接发送
             EventBusFactory.getInstance().post(event);
@@ -162,11 +161,17 @@ public class KafkaProducerBinding implements MqProducer {
      */
     private static class KafkaProduceQueueThread implements Runnable{
 
+        private final DataPipeline<MqEvent> dataPipeline;
+
+        private KafkaProduceQueueThread() {
+            dataPipeline = MqClient.getPipeline(MqTypeEnum.KAFKA.getMemo());
+        }
+
         @Override
         public void run() {
             while (!closeFlag.get()) {
                 try {
-                    KafkaProduceEvent event = eventQueue.poll(300, TimeUnit.MILLISECONDS);
+                    KafkaProduceEvent event = (KafkaProduceEvent)dataPipeline.poll(300, TimeUnit.MILLISECONDS);
                     if (event != null) {
                         EventBusFactory.getInstance().post(event);
                     }

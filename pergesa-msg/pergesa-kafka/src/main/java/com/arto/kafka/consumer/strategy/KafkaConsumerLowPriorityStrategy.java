@@ -33,7 +33,7 @@ class KafkaConsumerLowPriorityStrategy extends AbstractKafkaConsumerStrategy imp
                 // 消费消息
                 onMessage(config, message);
             } else {
-                log.warn("Redelivered message, discard it. message:" + message);
+                log.info("Discard redelivered message:" + message);
             }
         } catch (Throwable e) {
             log.warn("Receive message failed. record=" + record, e);

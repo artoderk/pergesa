@@ -1,5 +1,6 @@
 package com.arto.core.intercepter;
 
+import com.arto.core.event.MqEvent;
 import com.arto.event.util.ThreadContextHolder;
 
 import java.util.ArrayList;
@@ -13,12 +14,12 @@ import java.util.List;
 public class TxMessageContextHolder extends ThreadContextHolder {
 
     @SuppressWarnings("unchecked")
-    public static List<Object> getTxMessages(){
+    public static List<MqEvent> getTxMessages(){
         return (List)getContext();
     }
 
     @SuppressWarnings("unchecked")
-    public static void setTxMessage(Object object){
+    public static void setTxMessage(MqEvent object){
         if (getContext() == null) {
             init();
         }
@@ -27,7 +28,7 @@ public class TxMessageContextHolder extends ThreadContextHolder {
 
     private static synchronized void init(){
         if (getContext() == null) {
-            List<Object> list = new ArrayList<Object>();
+            List<MqEvent> list = new ArrayList<MqEvent>();
             setContext(list);
         }
     }

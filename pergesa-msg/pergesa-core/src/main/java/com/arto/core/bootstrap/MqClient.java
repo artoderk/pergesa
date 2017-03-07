@@ -1,7 +1,10 @@
 package com.arto.core.bootstrap;
 
+import com.arto.core.common.DataPipeline;
+import com.arto.core.config.MqConfigManager;
 import com.arto.core.consumer.ConsumerConfig;
 import com.arto.core.consumer.MqConsumer;
+import com.arto.core.event.MqEvent;
 import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.arto.core.producer.ProducerConfig;
@@ -27,7 +30,10 @@ public class MqClient implements Destroyable{
     private static final MqClient instance = new MqClient();
 
     private static final ConcurrentMap<String, MqFactory> factoryMap
-            = new ConcurrentHashMap<String, MqFactory>(3);
+            = new ConcurrentHashMap<String, MqFactory>(2);
+
+    private static final ConcurrentMap<String, DataPipeline<MqEvent>> pipelineMap
+            = new ConcurrentHashMap<String, DataPipeline<MqEvent>>(2);
 
     static {
         // 初始化
@@ -42,8 +48,13 @@ public class MqClient implements Destroyable{
         Iterator<MqFactory> mqFactories = serviceLoader.iterator();
         MqFactory mqFactory;
         while(mqFactories.hasNext()){
+            // 加载客户端实现
             mqFactory = mqFactories.next();
             factoryMap.put(mqFactory.getMqType(), mqFactory);
+
+            // 加载消息队列
+            DataPipeline<MqEvent> dataPipeline = new DataPipeline<MqEvent>(MqConfigManager.getInt("mq.pipeline.size", 50000));
+            pipelineMap.put(mqFactory.getMqType(), dataPipeline);
         }
         // 注册勾子
         SpringDestroyableUtil.add("mqClient", instance);
@@ -102,6 +113,14 @@ public class MqClient implements Destroyable{
         return null;
     }
 
+    public static DataPipeline<MqEvent> getPipeline(String mqType){
+        if (pipelineMap.containsKey(mqType)) {
+            return pipelineMap.get(mqType);
+        }
+        throw new MqClientException("Not support this MQ type:" + mqType);
+    }
+
+
     /**
      * 销毁所有的生产者和消息者
      */
@@ -109,6 +128,10 @@ public class MqClient implements Destroyable{
         for(Map.Entry<String, MqFactory> entry : factoryMap.entrySet()){
             entry.getValue().destroy();
         }
+        for(Map.Entry<String, DataPipeline<MqEvent>> entry : pipelineMap.entrySet()){
+            entry.getValue().clear();
+        }
         factoryMap.clear();
+        pipelineMap.clear();
     }
 }
