@@ -29,10 +29,11 @@ import java.util.Map;
 @Repository
 public class EventRdbStorage implements EventStorage {
 
-	private static final String EVENT_SQL = " SELECT ID, TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, " +
+	private static final String EVENT_COLUMN = "ID, TAG, SYSTEM_ID, BUSINESS_ID, BUSINESS_TYPE, " +
 			" EVENT_TYPE, STATUS, PAYLOAD, RETRIED_COUNT_D, RETRIED_COUNT_C, " +
-			" NEXT_RETRY_TIME, MEMO, GMT_CREATED, GMT_MODIFIED " +
-			" FROM EVENT_STORAGE E ";
+			" NEXT_RETRY_TIME, MEMO, GMT_CREATED, GMT_MODIFIED ";
+
+	private static final String EVENT_SQL = " SELECT " + EVENT_COLUMN + " FROM EVENT_STORAGE E ";
 
     @Autowired
 	private NamedParameterJdbcTemplate npJdbcTemplate;
@@ -138,7 +139,7 @@ public class EventRdbStorage implements EventStorage {
 	public List<EventInfo> findSince(String systemId, List<Integer> tags, Timestamp recoveryDate, Timestamp delaySecond, int limit) {
 		StringBuilder builder = new StringBuilder();
 
-		builder.append(EVENT_SQL + "(");
+		builder.append(" SELECT " + EVENT_COLUMN + " FROM(");
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId");
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
@@ -151,7 +152,7 @@ public class EventRdbStorage implements EventStorage {
 		builder.append(" AND GMT_MODIFIED > :maxRecoveryDate");
 		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
 		builder.append(" AND NEXT_RETRY_TIME < :currentDate");
-		builder.append(" ) es LIMIT = :limit");
+		builder.append(" ) es LIMIT :limit");
 
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("systemId", systemId);

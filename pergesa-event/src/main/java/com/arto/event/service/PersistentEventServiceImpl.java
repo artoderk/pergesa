@@ -146,7 +146,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(ConfigManager.getInt("kafka.retry.interval", 600)));
         } else {
             // 设置有重试次数时
-            updInfo.setNextRetryTime(getNextRetryTime(eventInfo.getCurrentRetriedCount()));
+            updInfo.setNextRetryTime(getNextRetryTime(updInfo.getCurrentRetriedCount()));
         }
         // 更新重试信息
         update(updInfo);
@@ -200,13 +200,12 @@ public class PersistentEventServiceImpl implements PersistentEventService {
     }
 
     private Timestamp getNextRetryTime(int currentRetriedCount){
-        long delayMsec = 600 * 1000;;
+        long delayMsec = 600 * 1000; // 10分钟
         switch (currentRetriedCount){
-            case 1: // 1分钟
-                delayMsec = 60 * 1000;
+            case 1: // 10分钟
                 break;
-            case 2: // 10分钟
-                delayMsec = 600 * 1000;
+            case 2: // 30分钟
+                delayMsec = 1800 * 1000;
                 break;
             case 3: // 1小时
                 delayMsec = 3600 * 1000;

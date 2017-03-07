@@ -70,10 +70,10 @@ public class PersistentEventRouterFactory {
                 .append(")(com.alibaba.fastjson.JSON.parseObject(eventInfo.getPayload(), ")
                 .append(eventInfo.getEventType()).append(".class)); ");
         // 加入持久化属性
-        sb.append(" com.arto.event.build.EventContext eventContext = new com.arto.event.build.EventContext(eventInfo);");
+        sb.append(" com.arto.event.bootstrap.EventContext eventContext = new com.arto.event.bootstrap.EventContext(eventInfo);");
         sb.append(" event.setEventContext(eventContext);");
         // 发送事件
-        sb.append(" com.arto.event.build.EventBusFactory.getInstance().post(event); }");
+        sb.append(" com.arto.event.bootstrap.EventBusFactory.getInstance().post(event); }");
 
         String methodStr = sb.toString();
         log.info("Create method source:" + methodStr);

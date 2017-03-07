@@ -4,6 +4,7 @@ import com.arto.event.bootstrap.Event;
 import com.arto.event.bootstrap.EventListener;
 import com.arto.event.service.EventAdviceService;
 import com.arto.kafka.common.Constants;
+import com.arto.kafka.config.KafkaConfigManager;
 import com.arto.kafka.event.KafkaProduceEvent;
 import com.arto.kafka.producer.KafkaMessageProducer;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -49,7 +50,8 @@ public class KafkaReportEventListener implements EventListener<Event<String>> {
 
     private KafkaProduceEvent convert2(Event<String> event){
         KafkaProduceEvent produceEvent = new KafkaProduceEvent();
-        produceEvent.setDestination(com.arto.event.common.Constants.REPORT_DEST);
+        produceEvent.setDestination(KafkaConfigManager.getString("event.failed.report.topic"
+                , com.arto.event.common.Constants.REPORT_DEST));
         produceEvent.setPayload(event.getPayload());
         return produceEvent;
     }

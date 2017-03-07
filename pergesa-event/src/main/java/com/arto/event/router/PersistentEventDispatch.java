@@ -27,7 +27,7 @@ public class PersistentEventDispatch {
     public boolean router(EventInfo eventInfo) {
         try{
             // 调用静态代理动态解析事件并路由给指定事件处理器
-            PersistentEventDispatch proxy = PersistentEventRouterFactory.getProxy(eventInfo);
+            PersistentEventRouter proxy = PersistentEventRouterFactory.getProxy(eventInfo);
             proxy.router(eventInfo);
         } catch (Throwable e) {
             log.error("Router event failed.", e);

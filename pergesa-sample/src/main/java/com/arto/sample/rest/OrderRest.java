@@ -48,7 +48,8 @@ public class OrderRest {
         long start = System.currentTimeMillis();
         OrderDO orderDO= new OrderDO(1, productId, userId, status, 1);
         for (int i = 1; i <= times; i++) {
-            orderDO.setOrderId(i);
+            orderDO.setOrderId(System.currentTimeMillis());
+            orderDO.setAmount(i);
             orderService.addOrder(orderDO);
         }
 
