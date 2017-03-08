@@ -12,4 +12,9 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 public class KafkaReportEvent extends MqEvent {
+
+    public KafkaReportEvent(){
+        this.setGroup(KafkaConsumeEvent.class);
+    }
+
 }

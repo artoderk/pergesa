@@ -105,12 +105,14 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             retry(eventInfo);
         }
         if (eventInfo.getCurrentRetriedCount() == eventInfo.getDefaultRetriedCount()) {
-            // 通过MQ发送到后管系统
+            // 到达重试次数时
+            eventInfo.setStatus(EventStatusEnum.MANUAL_WAIT.getCode());
+            // 1.通过MQ发送到后管系统
             report(eventInfo);
-            // 更新处理状态为 "3:等待人工处理"
+            // 2.更新处理状态为 "3:等待人工处理"
             EventInfo updInfo = new EventInfo();
             updInfo.setId(eventInfo.getId());
-            updInfo.setStatus(EventStatusEnum.MANUAL_WAIT.getCode());
+            updInfo.setStatus(eventInfo.getStatus());
             update(updInfo);
         } else {
             // 继续重试
@@ -135,7 +137,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
     private void retry(EventInfo eventInfo){
         EventInfo updInfo = new EventInfo();
         updInfo.setId(eventInfo.getId());
-        if (eventInfo.getStatus() == EventStatusEnum.WAIT.getCode()) {
+        if (eventInfo.getStatus() != EventStatusEnum.PROCESSING.getCode()) {
             // 更新状态为 "1:处理中"
             updInfo.setStatus(EventStatusEnum.PROCESSING.getCode());
         }

@@ -17,7 +17,7 @@ public class TestMqConsumer /*extends DefaultTestCase*/ {
         config.setListener(new MqListener<TestMessageBean>() {
             @Override
             public void onMessage(MessageRecord<TestMessageBean> record) {
-                //System.out.println("############ Listener onMessage:" + record);
+                System.out.println("############ Listener onMessage:" + record);
             }
 
             @Override

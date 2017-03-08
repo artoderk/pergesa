@@ -1,9 +1,9 @@
-package com.arto.kafka.event;
+package com.arto.kafka.listener;
 
 import com.arto.event.bootstrap.EventBusFactory;
-import com.arto.kafka.listener.KafkaConsumeEventListener;
-import com.arto.kafka.listener.KafkaProduceEventListener;
-import com.arto.kafka.listener.KafkaReportEventListener;
+import com.arto.kafka.event.KafkaConsumeEvent;
+import com.arto.kafka.event.KafkaProduceEvent;
+import com.arto.kafka.event.KafkaReportEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import javax.annotation.PostConstruct;
  * Created by xiong.j on 2017/1/6.
  */
 @Component
-public class KafkaEventManager {
+public class KafkaEventListenerManager {
 
     /** 消息需发送事件监听器 */
     @Autowired

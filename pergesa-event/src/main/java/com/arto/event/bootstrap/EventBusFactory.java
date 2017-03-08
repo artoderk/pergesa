@@ -77,8 +77,16 @@ public final class EventBusFactory {
      * @param event 事件
      */
     public void post(final Event event) {
-        String group = event.getClass().getName();
+        String group;
+        if (event.getGroup() != null) {
+            // 有设Group的直接使用Group
+            group = event.getGroup().getName();
+        } else {
+            // 无设Group的取Class名
+            group = event.getClass().getName();
+        }
         if (itemMap.containsKey(group)) {
+
             itemMap.get(group).post(event);
         } else {
             throw new EventException("This event has no EventBus instance.");

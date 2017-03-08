@@ -22,6 +22,7 @@ public class KafkaProduceEvent extends MqEvent {
 
     public KafkaProduceEvent(){
         this.setType(MqTypeEnum.KAFKA.getMemo());
+        this.setGroup(KafkaProduceEvent.class);
     }
 
 }
