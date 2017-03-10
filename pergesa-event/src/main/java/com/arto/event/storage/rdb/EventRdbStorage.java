@@ -140,12 +140,14 @@ public class EventRdbStorage implements EventStorage {
 		StringBuilder builder = new StringBuilder();
 
 		builder.append(" SELECT " + EVENT_COLUMN + " FROM(");
+		// 等待处理的数据, 默认延迟10分钟再执行
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId");
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
 		builder.append(" AND STATUS = " + EventStatusEnum.WAIT.getCode());
-		builder.append(" AND GMT_MODIFIED > :delaySecond");
+		builder.append(" AND GMT_MODIFIED < :delaySecond");
 		builder.append(" UNION ALL ");
+		// 重试过1次以上的数据，按照重试时间取
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId" );
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");

@@ -45,6 +45,8 @@ public class OrderServiceImpl implements OrderService{
 
     private void sendMessage(OrderDO orderDO) {
         producer.send(new MessageRecord<OrderDO>("oid" + orderDO.getOrderId(), "order", orderDO));
+        // 如果已开启事务发送，但有消息不需要事务发送时可使用sendNonTx方法
+        //producer.sendNonTx(new MessageRecord<OrderDO>("oid" + orderDO.getOrderId(), "order", orderDO));
     }
 
     private class OrderCallback implements MqCallback<OrderDO>{

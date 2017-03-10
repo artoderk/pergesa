@@ -44,7 +44,7 @@ public class KafkaMessageConsumer {
         try {
             pollThread = new KafkaMessagePollThread(factory.getConsumer());
             new Thread(pollThread, "KafkaMessagePollThread").start();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("kafka consumer init failed.");
         }
     }

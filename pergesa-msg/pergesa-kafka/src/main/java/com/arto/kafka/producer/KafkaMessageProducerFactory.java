@@ -1,6 +1,5 @@
 package com.arto.kafka.producer;
 
-import com.arto.event.common.Destroyable;
 import com.arto.kafka.common.KAcksEnum;
 import com.arto.kafka.config.KafkaConfigManager;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +52,7 @@ public class KafkaMessageProducerFactory {
      * @return
      * @throws Exception
      */
-    public KafkaProducer<String, String> getProducer(final Integer priority) throws Exception {
+    public KafkaProducer<String, String> getProducer(final Integer priority) throws Throwable {
         if (producerMap.containsKey(priority)) {
             return producerMap.get(priority);
         } else {
@@ -78,7 +77,7 @@ public class KafkaMessageProducerFactory {
     protected void prepareEnvironments(final Integer priority, final Properties props) {
     }
 
-    private synchronized KafkaProducer<String, String> createProducer(final Integer priority) throws Exception {
+    private synchronized KafkaProducer<String, String> createProducer(final Integer priority) throws Throwable {
         if (producerMap.containsKey(priority)) {
             return producerMap.get(priority);
         }

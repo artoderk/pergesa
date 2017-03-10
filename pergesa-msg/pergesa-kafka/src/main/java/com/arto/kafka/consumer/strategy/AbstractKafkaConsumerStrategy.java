@@ -24,17 +24,23 @@ public class AbstractKafkaConsumerStrategy {
      * @return
      */
     protected MessageRecord deserializerMessage(KafkaConsumerConfig config, String payload) {
+        MessageRecord messageRecord;
         try {
             if (config.getListener() != null) {
                 // 通过接口消费消息
-                return JSON.parseObject(payload, TypeReferenceUtil.getType(config.getListener()));
+                messageRecord = JSON.parseObject(payload, TypeReferenceUtil.getType(config.getListener()));
             } else {
                 // 通过注解消费消息
-                return JSON.parseObject(payload, TypeReferenceUtil.getType(config.getBean(), config.getMethod().getName()));
+                messageRecord = JSON.parseObject(payload, TypeReferenceUtil.getType(config.getBean(), config.getMethod().getName()));
             }
         } catch (Throwable t) {
-            throw new MqClientException("Deserializer message failed, message=" + payload, t);
+            throw new MqClientException("Deserializer message failed, message=" + payload + ", config=" + config, t);
         }
+
+        if (messageRecord == null || messageRecord.getMessage() == null) {
+            throw new MqClientException("Deserializer message failed, message=" + payload + ", config=" + config);
+        }
+        return messageRecord;
     }
 
     /**

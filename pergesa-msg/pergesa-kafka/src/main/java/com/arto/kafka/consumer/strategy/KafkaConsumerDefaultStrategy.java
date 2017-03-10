@@ -1,8 +1,11 @@
 package com.arto.kafka.consumer.strategy;
 
-import com.arto.event.common.Destroyable;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.arto.core.common.MessageRecord;
+import com.arto.core.common.MqTypeEnum;
 import com.arto.event.bootstrap.Event;
+import com.arto.event.common.Destroyable;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.event.util.SpringDestroyableUtil;
@@ -10,9 +13,11 @@ import com.arto.event.util.ThreadUtil;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.event.KafkaConsumeEvent;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.arto.kafka.common.KUtil.buildMessageId;
@@ -53,14 +58,20 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
 
     @SuppressWarnings("unchecked")
     private void tryConsume(final KafkaConsumerConfig config, final ConsumerRecord<String, String> record) {
-        // 如果出错，重试消费3次，超过三次持久化后由调度任务再重试
+        MessageRecord message = null;
+        try {
+            // 反序列化消息
+            message = deserializerMessage(config, record.value());
+            // 生成消息ID
+            message.setMessageId(buildMessageId(record.partition(), record.offset()));
+        } catch (Throwable e) {
+            // 持久化消息，以便重试
+            infiniteRetry(record, message);
+        }
+
+        // 如果消费出错，重试消费3次，超过三次持久化后由调度任务再重试
         for (int i = 1; i <= 3; i++) {
-            MessageRecord message = null;
             try {
-                // 反序列化消息
-                message = deserializerMessage(config, record.value());
-                // 生成消息ID
-                message.setMessageId(buildMessageId(record.partition(), record.offset()));
                 // 重复消费检测
                 if (!checkRedeliver(config, message)) {
                     // 消费消息
@@ -72,6 +83,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
             } catch (Throwable e) {
                 log.warn("Receive message failed, waiting for retry. record=" + record, e);
                 if (i == 3) {
+                    // 持久化消息，以便重试
                     infiniteRetry(record, message);
                 } else {
                     // 消息处理错误，暂停处理一小会
@@ -86,7 +98,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
         // 转换为事件
         Event event = buildEvent(record, message);
         // 无限重试直到持久化成功
-        while (closeFlag.get()){
+        while (!closeFlag.get()){
             try {
                 service.persist(event, Constants.K_CONSUME_EVENT_BEAN);
                 break;
@@ -99,23 +111,48 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
         log.info("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
     }
 
+    @SuppressWarnings("unchecked")
     private Event buildEvent(final ConsumerRecord<String, String> record, MessageRecord message){
         // 生成事件
         KafkaConsumeEvent event = new KafkaConsumeEvent();
         // 事件分组
         event.setGroup(KafkaConsumeEvent.class);
-        // 业务流水号设为消息ID
-        if (message == null) {
-            event.setBusinessId(buildMessageId(record.partition(), record.offset()));
-        } else {
-            event.setBusinessId(message.getMessageId());
-        }
-        // 业务类型
+        // 默认业务类型
         event.setBusinessType(Constants.K_CONSUME);
         // 消息
-        event.setPayload(record.value());
-        // 重试次数
-        event.setRetry(3);
+        event.setPayload(message);
+        // 目的地
+        event.setDestination(record.topic());
+        // 消息类型
+        event.setType(MqTypeEnum.KAFKA.getMemo());
+        // 是否持久化
+        event.setPersistent(true);
+        if (message == null) {
+            JSONObject jsonObject = JSON.parseObject(record.value());
+            String messageId = buildMessageId(record.partition(), record.offset());
+            if (!Strings.isNullOrEmpty(jsonObject.getString("businessId"))) {
+                // 消息自带业务流水号
+                event.setBusinessId(jsonObject.getString("businessId"));
+                // 消息自带业务类型
+                event.setBusinessType(jsonObject.getString("businessType"));
+            } else {
+                // 业务流水号为消息ID
+                event.setBusinessId(messageId);
+            }
+            // 设置消息Id
+            Map map = (Map) jsonObject.get("message");
+            map.put("messageId", messageId);
+            // 消息解析出错时消息设为json对象
+            event.setPayload(jsonObject);
+        } else if (Strings.isNullOrEmpty(message.getBusinessId())) {
+            // 以非事务消息发送时业务流水号为消息ID
+            event.setBusinessId(message.getMessageId());
+        } else {
+            // 消息自带业务流水号
+            event.setBusinessId(message.getBusinessId());
+            // 消息自带业务类型
+            event.setBusinessType(message.getBusinessType());
+        }
         return event;
     }
 

@@ -54,7 +54,7 @@ public class KafkaMessageConsumerFactory {
      * @return
      * @throws Exception
      */
-    public KafkaConsumer<String, String> getConsumer() throws Exception {
+    public KafkaConsumer<String, String> getConsumer() throws Throwable {
         if (consumerMap.containsKey(defaultKey)) {
             return consumerMap.get(defaultKey);
         } else {
@@ -62,7 +62,7 @@ public class KafkaMessageConsumerFactory {
         }
     }
 
-    private synchronized KafkaConsumer<String, String> createConsumer() throws Exception {
+    private synchronized KafkaConsumer<String, String> createConsumer() throws Throwable {
         if (consumerMap.containsKey(defaultKey)) {
             return consumerMap.get(defaultKey);
         }

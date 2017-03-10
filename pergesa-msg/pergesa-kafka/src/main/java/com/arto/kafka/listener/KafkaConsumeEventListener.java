@@ -12,6 +12,7 @@ import com.arto.kafka.common.Constants;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.arto.kafka.consumer.strategy.AbstractKafkaConsumerStrategy;
 import com.arto.kafka.event.KafkaConsumeEvent;
+import com.google.common.base.Strings;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import lombok.extern.slf4j.Slf4j;
@@ -54,14 +55,10 @@ public class KafkaConsumeEventListener extends AbstractKafkaConsumerStrategy imp
 
     @SuppressWarnings("unchecked")
     private void onMessage(KafkaConsumeEvent event) throws Throwable {
-        // 持久化信息
-        EventInfo eventInfo = event.getEventContext().getEventInfo();
         // 获取主题的配置
         KafkaConsumerConfig config = getConsumerConfig(event.getDestination());
         // 反序列化消息
-        MessageRecord message = deserializerMessage(config, eventInfo.getPayload());
-        // 设置消息ID
-        message.setMessageId(eventInfo.getBusinessId());
+        MessageRecord message = deserializer(config, event);
         // 重复消费判断
         if (!checkRedeliver(config, message)) {
             // 消费消息
@@ -83,5 +80,17 @@ public class KafkaConsumeEventListener extends AbstractKafkaConsumerStrategy imp
         } catch (Throwable t) {
             throw new MqClientException("Can't get consumer config of topic=" + destination, t);
         }
+    }
+
+    private MessageRecord deserializer(KafkaConsumerConfig config, KafkaConsumeEvent event) {
+        // 持久化信息
+        EventInfo eventInfo = event.getEventContext().getEventInfo();
+        // 反序列化消息
+        MessageRecord message = deserializerMessage(config, event.getPayload().toString());
+        if (!Strings.isNullOrEmpty(eventInfo.getBusinessId())) {
+            message.setBusinessId(eventInfo.getBusinessId());
+            message.setBusinessType(eventInfo.getBusinessType());
+        }
+        return message;
     }
 }

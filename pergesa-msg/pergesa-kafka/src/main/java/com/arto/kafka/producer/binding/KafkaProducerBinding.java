@@ -94,6 +94,10 @@ public class KafkaProducerBinding implements MqProducer {
     }
 
     private void innerSend(MessageRecord record, boolean isTransaction) throws MqClientException {
+        if (record == null || record.getMessage() == null) {
+            throw new MqClientException("Message can't be null or blank");
+        }
+
         // 转换为事件
         KafkaProduceEvent event = buildEvent(record, isTransaction);
         if (event.isPersistent()) {

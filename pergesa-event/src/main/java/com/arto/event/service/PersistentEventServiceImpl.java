@@ -167,12 +167,18 @@ public class PersistentEventServiceImpl implements PersistentEventService {
     private void report(EventInfo eventInfo){
         Event<EventInfo> event = new Event<EventInfo>();
         event.setPayload(eventInfo);
+
         try {
             event.setGroup(Class.forName(Constants.REPORT_EVENT));
-        } catch (ClassNotFoundException e) {
-            throw new EventException("Report failed.", e);
+            EventBusFactory.getInstance().post(event);
+        } catch (Throwable t) {
+            log.warn("Report event failed. eventInfo" + eventInfo, t);
+            // 报告失败更新重试时间，避免调度任务立即抓取
+            EventInfo updInfo = new EventInfo();
+            updInfo.setId(eventInfo.getId());
+            updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(ConfigManager.getInt("kafka.retry.interval", 600)));
+            update(updInfo);
         }
-        EventBusFactory.getInstance().post(event);
     }
 
     private EventInfo event2Info(Event event, String type) throws Exception {
