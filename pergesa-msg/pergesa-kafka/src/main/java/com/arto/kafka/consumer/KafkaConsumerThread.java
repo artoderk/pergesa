@@ -65,11 +65,13 @@ public class KafkaConsumerThread implements Callable{
                     // commitAsync(topicPartition, new OffsetAndMetadata(currentConsumedRecord.offset() + 1));
                 //}
             }
-
-            resume(topicPartition);
         } catch (Throwable t) {
             log.warn("Kafka message consume failed", t);
             throw new MqClientException(t);
+        } finally {
+            if (topicPartition != null) {
+                resume(topicPartition);
+            }
         }
 
         return true;

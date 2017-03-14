@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.common.MqTypeEnum;
+import com.arto.core.exception.MqClientException;
 import com.arto.event.bootstrap.Event;
 import com.arto.event.common.Destroyable;
 import com.arto.event.service.PersistentEventService;
@@ -95,18 +96,23 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
 
     private void infiniteRetry(final ConsumerRecord<String, String> record
             , MessageRecord message) {
+        boolean failed = true;
         // 转换为事件
         Event event = buildEvent(record, message);
         // 无限重试直到持久化成功
         while (!closeFlag.get()){
             try {
                 service.persist(event, Constants.K_CONSUME_EVENT_BEAN);
+                failed = false;
                 break;
             } catch (Throwable e) {
                 log.warn("Persist message failed, waiting for retry. record=" + record, e);
             }
             // 持久化消息错误，暂停处理一小会
             ThreadUtil.sleep(5000, log);
+        }
+        if (failed && closeFlag.get()) {
+            throw new MqClientException("Persist message failed when stop server.");
         }
         log.warn("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
     }
