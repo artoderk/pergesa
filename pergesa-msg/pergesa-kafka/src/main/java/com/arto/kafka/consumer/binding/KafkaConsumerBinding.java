@@ -152,7 +152,7 @@ public class KafkaConsumerBinding implements MqConsumer {
                 } catch (InterruptedException e) {
                     log.warn("ConsumerWithTopicThread interrupted. ", e);
                 } catch (Throwable e) {
-                    log.warn("ConsumerWithTopicThread process failed. Topic=" + config.getDestination(), e);
+                    log.warn("ConsumerWithTopicThread process failed. Topic:" + config.getDestination(), e);
                 }
             }
         }
@@ -173,7 +173,7 @@ public class KafkaConsumerBinding implements MqConsumer {
          * 销毁线程池
          */
         void destroy() {
-            log.info("Kafka consumer thread pool is destroyed. topic=" + config.getDestination());
+            log.info("Kafka consumer thread pool is destroyed. topic:" + config.getDestination());
             executor.shutdown();
         }
 

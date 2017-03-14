@@ -35,7 +35,7 @@ class KafkaConsumerLowPriorityStrategy extends AbstractKafkaConsumerStrategy imp
                 log.info("Discard redelivered message:" + message);
             }
         } catch (Throwable e) {
-            log.warn("Receive message failed. record=" + record, e);
+            log.warn("Receive message failed. record:" + record, e);
         }
     }
 

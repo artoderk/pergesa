@@ -34,11 +34,11 @@ public class AbstractKafkaConsumerStrategy {
                 messageRecord = JSON.parseObject(payload, TypeReferenceUtil.getType(config.getBean(), config.getMethod().getName()));
             }
         } catch (Throwable t) {
-            throw new MqClientException("Deserializer message failed, message=" + payload + ", config=" + config, t);
+            throw new MqClientException("Deserializer message failed, message:" + payload + ", config:" + config, t);
         }
 
         if (messageRecord == null || messageRecord.getMessage() == null) {
-            throw new MqClientException("Deserializer message failed, message=" + payload + ", config=" + config);
+            throw new MqClientException("Deserializer message failed, message:" + payload + ", config:" + config);
         }
         return messageRecord;
     }
@@ -67,7 +67,7 @@ public class AbstractKafkaConsumerStrategy {
                 return false;
             }
         } catch (Throwable t) {
-            throw new MqClientException("Check redeliver failed, message=" + message, t);
+            throw new MqClientException("Check redeliver failed, message:" + message, t);
         }
     }
 
@@ -88,7 +88,7 @@ public class AbstractKafkaConsumerStrategy {
                 config.getMethod().invoke(config.getBean(), message);
             }
         } catch (Throwable t) {
-            throw new MqClientException("Consume message failed, message=" + message, t);
+            throw new MqClientException("Consume message failed, message:" + message, t);
         }
     }
 }

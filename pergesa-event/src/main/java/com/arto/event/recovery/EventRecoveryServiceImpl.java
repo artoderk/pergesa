@@ -43,7 +43,7 @@ public class EventRecoveryServiceImpl implements EventRecoveryService {
             persistentEventDispatch.router(info);
             successCount++;
         }
-        log.info("Event recovery service executed, data count=" + infos.size() + ", success count=" + successCount);
+        log.info("Event recovery service executed, data count:" + infos.size() + ", success count:" + successCount);
         return successCount;
     }
 }

@@ -78,7 +78,7 @@ public class KafkaConsumeEventListener extends AbstractKafkaConsumerStrategy imp
                 throw new MqClientException("Kafka client not initialzation.");
             }
         } catch (Throwable t) {
-            throw new MqClientException("Can't get consumer config of topic=" + destination, t);
+            throw new MqClientException("Can't get consumer config of topic:" + destination, t);
         }
     }
 

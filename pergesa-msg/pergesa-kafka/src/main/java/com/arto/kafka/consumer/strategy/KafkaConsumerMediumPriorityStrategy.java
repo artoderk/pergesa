@@ -45,7 +45,7 @@ class KafkaConsumerMediumPriorityStrategy extends AbstractKafkaConsumerStrategy 
                 }
                 break;
             } catch (Throwable e) {
-                log.warn("Receive message failed, waiting for retry. message=" + message, e);
+                log.warn("Receive message failed, waiting for retry. message:" + message, e);
                 if (i == 3) {
                     // 持久化消息，以便重试
                     log.warn("Receive message failed 3 times, Discard message:" + message);

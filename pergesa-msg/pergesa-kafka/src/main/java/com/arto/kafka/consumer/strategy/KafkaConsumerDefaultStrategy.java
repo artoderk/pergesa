@@ -82,7 +82,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
                 }
                 break;
             } catch (Throwable e) {
-                log.warn("Receive message failed, waiting for retry. record=" + record, e);
+                log.warn("Receive message failed, waiting for retry. record:" + record, e);
                 if (i == 3) {
                     // 持久化消息，以便重试
                     infiniteRetry(record, message);
@@ -106,7 +106,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
                 failed = false;
                 break;
             } catch (Throwable e) {
-                log.warn("Persist message failed, waiting for retry. record=" + record, e);
+                log.warn("Persist message failed, waiting for retry. record:" + record, e);
             }
             // 持久化消息错误，暂停处理一小会
             ThreadUtil.sleep(5000, log);
@@ -114,7 +114,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
         if (failed) {
             throw new MqClientException("Persist message failed when stop server.");
         } else {
-            log.warn("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
+            log.warn("Receive message failed 3 times, persisted message to db waiting for retry. record:" + record);
         }
     }
 
