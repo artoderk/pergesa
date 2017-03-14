@@ -13,6 +13,8 @@ import lombok.ToString;
 @ToString
 public class KafkaConsumeEvent extends MqEvent{
 
+    private String messageId;
+
     public KafkaConsumeEvent(){
         this.setGroup(KafkaConsumeEvent.class);
     }

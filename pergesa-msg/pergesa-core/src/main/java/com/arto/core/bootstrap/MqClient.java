@@ -131,7 +131,7 @@ public class MqClient implements Destroyable{
         for(Map.Entry<String, DataPipeline<MqEvent>> entry : pipelineMap.entrySet()){
             entry.getValue().clear();
         }
-        factoryMap.clear();
+        factoryMap.clear(); // TODO 为避免启动时MQ连不上，这里可能不能清除
         pipelineMap.clear();
     }
 }

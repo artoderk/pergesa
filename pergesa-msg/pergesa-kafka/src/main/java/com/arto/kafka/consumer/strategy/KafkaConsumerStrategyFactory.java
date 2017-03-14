@@ -54,14 +54,15 @@ public class KafkaConsumerStrategyFactory {
         KafkaConsumerStrategy strategy;
         switch (priority) {
             case 1:
-                // 重要消息，不能容忍消息丢失
+                // 重要消息，重试三次后入库等待重试
                 strategy = new KafkaConsumerDefaultStrategy();
                 break;
-//                case 2:
-//                    // TODO 其它消费优先级待实现
-//                    break;
+            case 2:
+                // 普通消息，重试三次后丢弃消息
+                strategy = new KafkaConsumerMediumPriorityStrategy();
+                break;
             case 3:
-                // 不重要消息，可容忍消息丢失
+                // 不重要消息，出错即丢弃消息
                 strategy = new KafkaConsumerLowPriorityStrategy();
                 break;
             default:

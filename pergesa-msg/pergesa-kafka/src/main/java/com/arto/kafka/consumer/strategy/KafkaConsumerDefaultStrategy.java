@@ -17,7 +17,6 @@ import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.arto.kafka.common.KUtil.buildMessageId;
@@ -65,6 +64,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
             // 生成消息ID
             message.setMessageId(buildMessageId(record.partition(), record.offset()));
         } catch (Throwable e) {
+            log.warn("Deserializer record failed, Discard record:" + record, e);
             // 持久化消息，以便重试
             infiniteRetry(record, message);
         }
@@ -108,7 +108,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
             // 持久化消息错误，暂停处理一小会
             ThreadUtil.sleep(5000, log);
         }
-        log.info("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
+        log.warn("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
     }
 
     @SuppressWarnings("unchecked")
@@ -140,18 +140,21 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
                 event.setBusinessId(messageId);
             }
             // 设置消息Id
-            Map map = (Map) jsonObject.get("message");
-            map.put("messageId", messageId);
+            event.setMessageId(messageId);
             // 消息解析出错时消息设为json对象
             event.setPayload(jsonObject);
-        } else if (Strings.isNullOrEmpty(message.getBusinessId())) {
-            // 以非事务消息发送时业务流水号为消息ID
-            event.setBusinessId(message.getMessageId());
         } else {
-            // 消息自带业务流水号
-            event.setBusinessId(message.getBusinessId());
-            // 消息自带业务类型
-            event.setBusinessType(message.getBusinessType());
+            // 设置消息Id
+            event.setMessageId(message.getMessageId());
+            if (Strings.isNullOrEmpty(message.getBusinessId())) {
+                // 以非事务消息发送时业务流水号为消息ID
+                event.setBusinessId(message.getMessageId());
+            } else {
+                // 消息自带业务流水号
+                event.setBusinessId(message.getBusinessId());
+                // 消息自带业务类型
+                event.setBusinessType(message.getBusinessType());
+            }
         }
         return event;
     }

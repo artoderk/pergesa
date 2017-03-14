@@ -8,8 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import static com.arto.kafka.common.KUtil.buildMessageId;
 
 /**
- * 低优先级消费模式，适合容忍消息丢失的非重要消息
- * (单条消息处理完成后消费标识异步提交)
+ * 低优先级消费模式，消息出错直接丢弃，适合容忍消息丢失的非重要消息
  *
  * Created by xiong.j on 2017/1/20.
  */

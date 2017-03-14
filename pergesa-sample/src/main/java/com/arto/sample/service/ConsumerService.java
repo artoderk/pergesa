@@ -27,7 +27,7 @@ public class ConsumerService {
     }
 
     @Consumer(destination = "pegesa-test-medium", priority = MessagePriorityEnum.MEDIUM)
-    public void consumerMedium(MessageRecord<OrderDO> message){
+        public void consumerMedium(MessageRecord<OrderDO> message){
         System.out.println("ConsumerService.consumerMedium message:" + message);
     }
 

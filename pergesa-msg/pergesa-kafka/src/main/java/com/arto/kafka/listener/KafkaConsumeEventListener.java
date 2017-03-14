@@ -91,6 +91,7 @@ public class KafkaConsumeEventListener extends AbstractKafkaConsumerStrategy imp
             message.setBusinessId(eventInfo.getBusinessId());
             message.setBusinessType(eventInfo.getBusinessType());
         }
+        message.setMessageId(event.getMessageId());
         return message;
     }
 }
