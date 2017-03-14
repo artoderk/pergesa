@@ -111,10 +111,11 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
             // 持久化消息错误，暂停处理一小会
             ThreadUtil.sleep(5000, log);
         }
-        if (failed && closeFlag.get()) {
+        if (failed) {
             throw new MqClientException("Persist message failed when stop server.");
+        } else {
+            log.warn("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
         }
-        log.warn("Receive message failed 3 times, persisted message to db waiting for retry. record=" + record);
     }
 
     @SuppressWarnings("unchecked")
