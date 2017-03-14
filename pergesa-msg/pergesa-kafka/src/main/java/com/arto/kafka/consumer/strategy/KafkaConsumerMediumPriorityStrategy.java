@@ -30,7 +30,7 @@ class KafkaConsumerMediumPriorityStrategy extends AbstractKafkaConsumerStrategy 
             // 生成消息ID
             message.setMessageId(buildMessageId(record.partition(), record.offset()));
         } catch (Throwable e) {
-            log.warn("Deserializer record failed, Discard record:" + record, e);
+            log.warn("Deserializer record failed, Discard this record:" + record, e);
         }
 
         // 如果消费出错，重试消费3次，超过三次后丢弃

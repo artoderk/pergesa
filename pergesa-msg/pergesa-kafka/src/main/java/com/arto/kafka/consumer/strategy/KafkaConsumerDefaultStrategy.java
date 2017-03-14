@@ -64,7 +64,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
             // 生成消息ID
             message.setMessageId(buildMessageId(record.partition(), record.offset()));
         } catch (Throwable e) {
-            log.warn("Deserializer record failed, Discard record:" + record, e);
+            log.warn("Deserializer record failed, Discard this record:" + record, e);
             // 持久化消息，以便重试
             infiniteRetry(record, message);
         }
