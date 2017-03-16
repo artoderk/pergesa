@@ -3,6 +3,7 @@ package com.arto.kafka.consumer.binding;
 import com.arto.core.consumer.MqConsumer;
 import com.arto.core.consumer.MqListener;
 import com.arto.event.util.SpringContextHolder;
+import com.arto.event.util.SpringThreadPoolUtil;
 import com.arto.kafka.consumer.KafkaConsumerThread;
 import com.arto.kafka.consumer.KafkaConsumerWrapper;
 import com.arto.kafka.consumer.KafkaMessageConsumer;
@@ -15,8 +16,8 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -84,7 +85,7 @@ public class KafkaConsumerBinding implements MqConsumer {
     public void close() {
         if (localThread != null) {
             closeFlag.set(true);
-            localThread.destroy();
+//            localThread.destroy();
         }
     }
 
@@ -115,7 +116,7 @@ public class KafkaConsumerBinding implements MqConsumer {
         private LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue;
 
         /** 消息处理线程池 */
-        private ThreadPoolExecutor executor;
+        private ExecutorService executor;
 
         /** 消息处理线程列表 */
         private List<WeakReference<KafkaConsumerThread>> threadList;
@@ -130,10 +131,12 @@ public class KafkaConsumerBinding implements MqConsumer {
                 , final LinkedBlockingQueue<List<ConsumerRecord<String, String>>> topicQueue) {
             this.consumerWrapper = consumerWrapper;
             this.topicQueue = topicQueue;
-            executor = new ThreadPoolExecutor(config.getNumThreads(), config.getNumThreads(),
-                    0L, TimeUnit.MILLISECONDS,
-                    new LinkedBlockingQueue<Runnable>(),
-                    new ThreadPoolExecutor.CallerRunsPolicy());
+//            executor = new ThreadPoolExecutor(config.getNumThreads(), config.getNumThreads(),
+//                    0L, TimeUnit.MILLISECONDS,
+//                    new LinkedBlockingQueue<Runnable>(),
+//                    new ThreadPoolExecutor.CallerRunsPolicy());
+            executor = SpringThreadPoolUtil.getNewPool(config.getDestination(), config.getNumThreads(), config.getNumThreads()
+                    , 100, null).getThreadPoolExecutor();
             threadList = new LinkedList<WeakReference<KafkaConsumerThread>>();
         }
 
@@ -172,10 +175,10 @@ public class KafkaConsumerBinding implements MqConsumer {
         /**
          * 销毁线程池
          */
-        void destroy() {
-            log.info("Kafka consumer thread pool is destroyed. topic:" + config.getDestination());
-            executor.shutdown();
-        }
+//        void destroy() {
+//            log.info("Kafka consumer thread pool is destroyed. topic:" + config.getDestination());
+//            executor.shutdown();
+//        }
 
         private KafkaConsumerThread createConsumerThread(List<ConsumerRecord<String, String>> records){
             KafkaConsumerThread thread = new KafkaConsumerThread(consumerWrapper, config, records);

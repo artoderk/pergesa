@@ -14,10 +14,4 @@
 
     <aop:aspectj-autoproxy/>
 
-    <job:bean id="persistentEventRecoveryJob" class="com.arto.event.recovery.PersistentEventRecoveryJob" regCenter="regCenter"
-              shardingTotalCount="10"
-              cron="0 0/10 * * * ? *"
-              failover="true"
-              description="Persistent event recovery job" />
-
 </beans>

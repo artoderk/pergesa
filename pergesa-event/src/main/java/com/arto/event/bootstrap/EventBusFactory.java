@@ -65,6 +65,7 @@ public final class EventBusFactory {
      * @param listener 作业事件
      */
     public synchronized void register(final Class group, final EventListener listener) {
+        if (group == null || listener == null) throw new EventException("Group and Listener can't be null.");;
         if (!itemMap.containsKey(group.getName())) {
             itemMap.putIfAbsent(group.getName(), new EventBusInstance());
         }
@@ -77,6 +78,7 @@ public final class EventBusFactory {
      * @param event 事件
      */
     public void post(final Event event) {
+        if (event == null) throw new EventException("Event can't be null.");
         String group;
         if (event.getGroup() != null) {
             // 有设Group的直接使用Group
@@ -98,9 +100,10 @@ public final class EventBusFactory {
      *
      * @param group 分组
      */
-    public synchronized void clearListeners(final String group) {
-        if (itemMap.containsKey(group)) {
-            itemMap.get(group).clearListeners();
+    public synchronized void clearListeners(final Class group) {
+        if (group == null) throw new EventException("Group can't be null.");;
+        if (itemMap.containsKey(group.getName())) {
+            itemMap.get(group.getName()).clearListeners();
         }
     }
 

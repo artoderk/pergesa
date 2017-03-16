@@ -22,7 +22,7 @@ public class Event<T> {
     private transient String businessType;
 
     /** 事件内容 */
-    private Object payload;
+    private T payload;
 
     /** 事件回调 */
     private transient EventCallback<T> callback;

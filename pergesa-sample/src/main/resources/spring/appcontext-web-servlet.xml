@@ -35,11 +35,19 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+    <!-- 持久化事件恢复Job的ZK注册中心，如不需要使用持久化功能可以不配 -->
     <reg:zookeeper id="regCenter" serverLists="${serverLists}"
                    namespace="${namespace}"
                    baseSleepTimeMilliseconds="${baseSleepTimeMilliseconds}"
                    maxSleepTimeMilliseconds="${maxSleepTimeMilliseconds}"
                    maxRetries="${maxRetries}"  />
+
+    <!-- 持久化事件恢复Job，如不需要使用持久化功能可以不配 -->
+    <job:bean id="persistentEventRecoveryJob" class="com.arto.event.recovery.PersistentEventRecoveryJob" regCenter="regCenter"
+              shardingTotalCount="10"
+              cron="0 0/10 * * * ? *"
+              failover="true"
+              description="Persistent event recovery job" />
 
     <import resource="classpath:pergesa-event.xml"/>
     <import resource="appcontext-service-db.xml" />

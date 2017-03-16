@@ -145,7 +145,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         updInfo.setCurrentRetriedCount(eventInfo.getCurrentRetriedCount() + 1);
         if (eventInfo.getDefaultRetriedCount() == -1) {
             // 无限重试时(默认间隔为10分钟)
-            updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(ConfigManager.getInt("kafka.retry.interval", 600)));
+            updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(ConfigManager.getInt("event.infinite.retry.interval", 600)));
         } else {
             // 设置有重试次数时
             updInfo.setNextRetryTime(getNextRetryTime(updInfo.getCurrentRetriedCount()));
@@ -176,7 +176,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
             // 报告失败更新重试时间，避免调度任务立即抓取
             EventInfo updInfo = new EventInfo();
             updInfo.setId(eventInfo.getId());
-            updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(ConfigManager.getInt("kafka.retry.interval", 600)));
+            updInfo.setNextRetryTime(DateUtil.getPrevSecTimestamp(ConfigManager.getInt("event.infinite.retry.interval", 600)));
             update(updInfo);
         }
     }

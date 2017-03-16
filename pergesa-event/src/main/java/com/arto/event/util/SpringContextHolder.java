@@ -37,6 +37,11 @@ public class SpringContextHolder implements BeanFactoryPostProcessor {
 		return (T) beanFactory.getBean(clazz);
 	}
 
+	public static BeanFactory getBeanFactory(){
+		checkApplicationContext();
+		return beanFactory;
+	}
+
 	private static void checkApplicationContext() {
 		if (beanFactory == null) {
 			throw new IllegalStateException(

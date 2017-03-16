@@ -53,7 +53,7 @@ public class MqClient implements Destroyable{
             factoryMap.put(mqFactory.getMqType(), mqFactory);
 
             // 加载消息队列
-            DataPipeline<MqEvent> dataPipeline = new DataPipeline<MqEvent>(MqConfigManager.getInt("mq.pipeline.size", 50000));
+            DataPipeline<MqEvent> dataPipeline = new DataPipeline<MqEvent>(MqConfigManager.getInt("mq.pipeline.size", 30000));
             pipelineMap.put(mqFactory.getMqType(), dataPipeline);
         }
         // 注册勾子

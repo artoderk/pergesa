@@ -34,6 +34,6 @@ public class TestMqConsumer /*extends DefaultTestCase*/ {
         new ClassPathXmlApplicationContext("classpath:pergesa-test.xml");
         TestMqConsumer t = new TestMqConsumer();
         t.testConsumer();
-
+        //SpringThreadPoolUtil.getNewPool("pegesa-test",  2, 2, 50, null);
     }
 }
