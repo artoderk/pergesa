@@ -11,6 +11,6 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-public class ActivemqEvent extends Event {
+public class AmqEvent extends Event {
 
 }
