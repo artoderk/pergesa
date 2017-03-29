@@ -1,6 +1,7 @@
 import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.producer.MqProducer;
+import com.arto.kafka.common.KafkaMessageRecord;
 import com.arto.kafka.producer.binding.KafkaProducerConfig;
 import common.DefaultTestCase;
 import common.TestMessageBean;
@@ -15,7 +16,7 @@ import java.util.List;
 public class TestMqProducer extends DefaultTestCase {
 
     public static void main(String args[]){
-//        KMessageRecord m = new KMessageRecord();
+//        KafkaMessageRecord m = new KafkaMessageRecord();
 //
 //        m.setMessage("Message");
 //        m.setKey("test");
@@ -79,7 +80,7 @@ public class TestMqProducer extends DefaultTestCase {
         bean.setName("TestMessageBean");
         bean.setList(list);
         try {
-            producer.send(bean);
+            producer.send(new KafkaMessageRecord("bid", "btype", bean));
         } catch (Exception e) {
             e.printStackTrace();
         }

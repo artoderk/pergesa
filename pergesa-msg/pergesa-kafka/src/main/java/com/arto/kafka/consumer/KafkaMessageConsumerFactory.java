@@ -80,9 +80,9 @@ public class KafkaMessageConsumerFactory {
         }
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG
-                , KafkaConfigManager.getString(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
+                , KafkaConfigManager.getString("kafka." + ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
         props.put(ConsumerConfig.GROUP_ID_CONFIG
-                , KafkaConfigManager.getString(ConsumerConfig.GROUP_ID_CONFIG, "pergesa-msg"));
+                , KafkaConfigManager.getString("kafka." + ConsumerConfig.GROUP_ID_CONFIG, "pergesa-msg"));
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 1000);
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG

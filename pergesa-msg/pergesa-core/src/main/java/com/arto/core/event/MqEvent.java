@@ -32,6 +32,6 @@ public class MqEvent extends Event {
     private String destination;
 
     /** 优先级 */
-    private int priority = 1;
+    private transient int priority = 1;
 
 }

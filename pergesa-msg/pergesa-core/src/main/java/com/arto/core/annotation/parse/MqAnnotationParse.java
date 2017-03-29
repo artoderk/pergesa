@@ -12,31 +12,101 @@
  */
 package com.arto.core.annotation.parse;
 
+import com.arto.core.annotation.Consumer;
+import com.arto.core.annotation.Producer;
 import com.arto.core.common.MqTypeEnum;
 import com.arto.core.config.MqConfigManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.Advised;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Created by xiong.j on 17/2/15.
  */
 @Slf4j
-public abstract class MqAnnotationParse implements InitializingBean, BeanPostProcessor {
+public class MqAnnotationParse implements InitializingBean, BeanPostProcessor {
 
-    protected Set<String> topicKeySet = new HashSet<String>();
+    // 消费者注解去重用
+    private Map<String, Set<String>> keySet = new HashMap<String, Set<String>>(3);
 
-    protected String defaultType;
+    // 注解解析策略
+    private Map<String, MqParseStrategy> strategyMap = new HashMap<String, MqParseStrategy>();
+
+    // 默认消息中间件类型
+    private String defaultType;
 
     public void afterPropertiesSet() throws Exception {
+        // 获取默认消息中件间类型
         defaultType = MqConfigManager.getString("default.mq.type", MqTypeEnum.KAFKA.getMemo());
+
+        // 加载注解解析实现
+        ServiceLoader<MqParseStrategy> serviceLoader = ServiceLoader.load(MqParseStrategy.class);
+        Iterator<MqParseStrategy> parseStrategies = serviceLoader.iterator();
+        MqParseStrategy parseStrategy;
+        while(parseStrategies.hasNext()){
+            parseStrategy = parseStrategies.next();
+            strategyMap.put(parseStrategy.getMqType(), parseStrategy);
+
+            // 初始化目的地列表
+            keySet.put(parseStrategy.getMqType(), new HashSet<String>());
+        }
     }
 
-    protected Object getTargetBean(Object bean) {
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        return bean;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+
+        Object targetBean = getTargetBean(bean);
+
+        // 扫描@Producer注解
+        Field fields[] = targetBean.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            parseProducer(targetBean, field);
+        }
+
+        // 扫描@Consumer注解
+        Method[] methods = targetBean.getClass().getDeclaredMethods();
+        for (Method method : methods) {
+            parseConsumer(targetBean, method);
+        }
+        return bean;
+    }
+
+    private void parseProducer(Object bean, Field field) {
+        Producer annotation = field.getAnnotation(Producer.class);
+        if (annotation != null) {
+            getStrategy(annotation.type().getMemo()).parseProducer(bean, field);
+        }
+    }
+
+    private void parseConsumer(Object bean, Method method) {
+        Consumer annotation = method.getAnnotation(Consumer.class);
+        if (annotation != null) {
+            String type = annotation.type().getMemo();
+            getStrategy(type).parseConsumer(keySet.get(type), bean, method);
+        }
+    }
+
+    private MqParseStrategy getStrategy(String type){
+        if (type.equals(MqTypeEnum.UNKNOWN.getMemo())) {
+            // 没有标注则取默认实现
+            return strategyMap.get(defaultType);
+        } else {
+            return strategyMap.get(type);
+        }
+    }
+
+    private Object getTargetBean(Object bean) {
         if (bean instanceof Advised) {
             try {
                 return ((Advised) bean).getTargetSource().getTarget();

@@ -16,7 +16,7 @@ package com.arto.kafka.common;
  * Created by xiongjie on 2016/7/21.
  */
 
-public enum KAcksEnum {
+public enum KafkaAcksEnum {
 
     UNKNOWN(9, "unknown"),
 
@@ -34,7 +34,7 @@ public enum KAcksEnum {
      * @param code
      * @param memo
      */
-    private KAcksEnum(int code, String memo) {
+    private KafkaAcksEnum(int code, String memo) {
         this.code = code;
         this.memo = memo;
     }
@@ -48,7 +48,7 @@ public enum KAcksEnum {
     }
     
     public static String getMemo(int code) {
-    	for(KAcksEnum type: KAcksEnum.values()){
+    	for(KafkaAcksEnum type: KafkaAcksEnum.values()){
     		if(type.code == code){
     			return type.memo;
     		}
@@ -56,8 +56,8 @@ public enum KAcksEnum {
     	return UNKNOWN.getMemo();
     }
 
-    public static KAcksEnum getEnum(int code) {
-        for (KAcksEnum item : values()) {
+    public static KafkaAcksEnum getEnum(int code) {
+        for (KafkaAcksEnum item : values()) {
             //不区分大小写
             if (code == item.getCode()) {
                 return item;

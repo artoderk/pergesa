@@ -14,7 +14,6 @@ package com.arto.kafka.producer.binding;
 
 import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.DataPipeline;
-import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.common.MqTypeEnum;
 import com.arto.core.event.MqEvent;
@@ -25,7 +24,7 @@ import com.arto.event.bootstrap.EventBusFactory;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.kafka.common.Constants;
-import com.arto.kafka.common.KMessageRecord;
+import com.arto.kafka.common.KafkaMessageRecord;
 import com.arto.kafka.event.KafkaProduceEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,12 +48,11 @@ public class KafkaProducerBinding implements MqProducer {
     private final PersistentEventService service;
 
     static {
-        // 注册Kafka客户端
-        new Thread(new KafkaProducerBinding.KafkaProduceQueueThread(), "KafkaProduceQueueThread").start();
+        // 注册事务消息发送线程
+        new Thread(new KafkaTxMessageSendThread(), "KafkaTxMessageSendThread").start();
     }
 
     public KafkaProducerBinding(KafkaProducerConfig config) {
-        verifyConfig(config);
         this.config = config;
         // 暂时依赖Spring获取
         this.service = SpringContextHolder.getBean("persistentEventService");
@@ -132,11 +130,11 @@ public class KafkaProducerBinding implements MqProducer {
         event.setBusinessType(record.getBusinessType());
         // Topic
         event.setDestination(config.getDestination());
-        if (record instanceof KMessageRecord) {
+        if (record instanceof KafkaMessageRecord) {
             // Hash主键
-            event.setKey(((KMessageRecord)record).getKey());
+            event.setKey(((KafkaMessageRecord)record).getKey());
             // 分区
-            event.setPartition(((KMessageRecord)record).getPartition());
+            event.setPartition(((KafkaMessageRecord)record).getPartition());
         }
         // 优先级
         event.setPriority(config.getPriority().getCode());
@@ -147,16 +145,6 @@ public class KafkaProducerBinding implements MqProducer {
         // 回调
         event.setCallback(config.getCallback());
         return event;
-    }
-
-    private void verifyConfig(KafkaProducerConfig config){
-        if ((config.getPriority().getCode() > MessagePriorityEnum.LOW.getCode())
-                || (config.getPriority().getCode() < MessagePriorityEnum.HIGH.getCode())) {
-            throw new MqClientException("Not support this priority! ProducerConfig:" + config);
-        }
-        if (config.getPriority() == MessagePriorityEnum.HIGH && config.getCallback() != null) {
-            throw new MqClientException("Transaction messages can't send by asynchronous! ProducerConfig:" + config);
-        }
     }
 
     /**
@@ -175,11 +163,11 @@ public class KafkaProducerBinding implements MqProducer {
     /**
      * 持久化消息存储后，直接扔Queue里在此线程处理
      */
-    private static class KafkaProduceQueueThread implements Runnable{
+    private static class KafkaTxMessageSendThread implements Runnable{
 
         private final DataPipeline<MqEvent> dataPipeline;
 
-        private KafkaProduceQueueThread() {
+        private KafkaTxMessageSendThread() {
             dataPipeline = MqClient.getPipeline(MqTypeEnum.KAFKA.getMemo());
         }
 

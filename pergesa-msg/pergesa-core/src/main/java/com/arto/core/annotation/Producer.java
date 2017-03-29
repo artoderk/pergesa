@@ -35,7 +35,10 @@ public @interface Producer {
     // 优先级
     MessagePriorityEnum priority() default MessagePriorityEnum.HIGH;
 
-    // 异步回调
+    // 异步回调 默认为null，以"Producer.class"代替null
     Class callback() default Producer.class;
+
+    // 是否启用消息两阶段提交
+    boolean isTransaction() default true;
 
 }

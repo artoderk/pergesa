@@ -1,10 +1,22 @@
-package com.arto.kafka.consumer.strategy;
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership. The ASF licenses this file
+ * to You under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package com.arto.core.consumer.strategy;
 
 import com.alibaba.fastjson.JSON;
 import com.arto.core.common.MessageRecord;
+import com.arto.core.consumer.ConsumerConfig;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.util.TypeReferenceUtil;
-import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import com.google.common.base.Strings;
 
 import java.lang.reflect.Method;
@@ -12,9 +24,9 @@ import java.lang.reflect.Method;
 /**
  * TODO 使用注解形式消费时用反射性能低下，需转成静态代理
  *
- * Created by xiong.j on 2017/2/21.
+ * Created by xiong.j on 2017/3/29.
  */
-public class AbstractKafkaConsumerStrategy {
+public class AbstractConsumerStrategy {
 
     /**
      * 反序列化消息
@@ -23,7 +35,7 @@ public class AbstractKafkaConsumerStrategy {
      * @param payload
      * @return
      */
-    protected MessageRecord deserializerMessage(KafkaConsumerConfig config, String payload) {
+    protected MessageRecord deserializerMessage(ConsumerConfig config, String payload) {
         MessageRecord messageRecord;
         try {
             if (config.getListener() != null) {
@@ -51,7 +63,7 @@ public class AbstractKafkaConsumerStrategy {
      * @return
      */
     @SuppressWarnings("unchecked")
-    protected boolean checkRedeliver(KafkaConsumerConfig config, MessageRecord message) {
+    protected boolean checkRedeliver(ConsumerConfig config, MessageRecord message) {
         try {
             if (config.getListener() != null) {
                 // 通过接口消费消息
@@ -78,7 +90,7 @@ public class AbstractKafkaConsumerStrategy {
      * @param message
      */
     @SuppressWarnings("unchecked")
-    protected void onMessage(KafkaConsumerConfig config, MessageRecord message){
+    protected void onMessage(ConsumerConfig config, MessageRecord message){
         try {
             if (config.getListener() != null) {
                 // 通过接口消费消息

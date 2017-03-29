@@ -28,7 +28,7 @@ import lombok.ToString;
 public class KafkaConsumerConfig extends ConsumerConfig {
 
     /** 批量提交消费标识大小 */
-    private int ackSize = 5;
+    private int batchSize = 5;
 
     public KafkaConsumerConfig(String destination) {
         this.setType(MqTypeEnum.KAFKA);

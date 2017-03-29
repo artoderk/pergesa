@@ -13,7 +13,7 @@
 package com.arto.kafka.serialization;
 
 import com.alibaba.fastjson.JSON;
-import com.arto.kafka.common.KMessageRecord;
+import com.arto.kafka.common.KafkaMessageRecord;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Created by xiong.jie on 17/1/18.
  */
-public class KafkaMessageRecordSerializer implements Serializer<KMessageRecord> {
+public class KafkaMessageRecordSerializer implements Serializer<KafkaMessageRecord> {
 
     private String encoding = "UTF8";
 
@@ -43,11 +43,11 @@ public class KafkaMessageRecordSerializer implements Serializer<KMessageRecord> 
     }
 
     @Override
-    public byte[] serialize(String topic, KMessageRecord message) {
+    public byte[] serialize(String topic, KafkaMessageRecord message) {
         try {
             return message == null ? null : JSON.toJSON(message).toString().getBytes(this.encoding);
         } catch (UnsupportedEncodingException e) {
-            throw new SerializationException("Error when serializing 'KMessageRecord' to byte[] due to unsupported encoding " + this.encoding);
+            throw new SerializationException("Error when serializing 'KafkaMessageRecord' to byte[] due to unsupported encoding " + this.encoding);
         }
     }
 

@@ -29,7 +29,7 @@ public class TestComplexJson /*extends DefaultTestCase*/ {
             }
         });
         config.setPriority(MessagePriorityEnum.LOW.getCode());
-        config.setAckSize(10);
+        config.setBatchSize(10);
         MqConsumer consumer = MqClient.buildConsumer(config);
     }
 

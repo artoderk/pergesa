@@ -15,6 +15,7 @@ package com.arto.kafka.listener;
 import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.common.MqTypeEnum;
+import com.arto.core.consumer.strategy.AbstractConsumerStrategy;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.bootstrap.EventListener;
 import com.arto.event.service.EventAdviceService;
@@ -22,7 +23,6 @@ import com.arto.event.storage.EventInfo;
 import com.arto.kafka.bootstrap.KafkaClientFactory;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
-import com.arto.kafka.consumer.strategy.AbstractKafkaConsumerStrategy;
 import com.arto.kafka.event.KafkaConsumeEvent;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -38,7 +38,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class KafkaConsumeEventListener extends AbstractKafkaConsumerStrategy implements EventListener<KafkaConsumeEvent> {
+public class KafkaConsumeEventListener extends AbstractConsumerStrategy implements EventListener<KafkaConsumeEvent> {
 
     @Autowired
     private EventAdviceService service;

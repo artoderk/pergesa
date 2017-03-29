@@ -12,7 +12,7 @@
  */
 package com.arto.kafka.producer;
 
-import com.arto.kafka.common.KAcksEnum;
+import com.arto.kafka.common.KafkaAcksEnum;
 import com.arto.kafka.config.KafkaConfigManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -95,9 +95,9 @@ public class KafkaMessageProducerFactory {
         }
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG
-                , KafkaConfigManager.getString(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
+                , KafkaConfigManager.getString("kafka." + ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.2.192:9092"));
         props.put(ProducerConfig.CLIENT_ID_CONFIG
-                , KafkaConfigManager.getString(ProducerConfig.CLIENT_ID_CONFIG, "pergesa-msg") + "-ack" + priority);
+                , KafkaConfigManager.getString("kafka." + ProducerConfig.CLIENT_ID_CONFIG, "pergesa-msg") + "-ack" + priority);
         props.put(ProducerConfig.ACKS_CONFIG
                 , String.valueOf(convert2Ack(priority)));
         props.put(ProducerConfig.RETRIES_CONFIG
@@ -125,11 +125,11 @@ public class KafkaMessageProducerFactory {
     private int convert2Ack(final Integer priority){
         // 优先级转换为Kafka的acks
         if (priority == -1 || priority == 1){
-            return KAcksEnum.ACK_ALL.getCode();
+            return KafkaAcksEnum.ACK_ALL.getCode();
         } else if (priority == 2){
-            return KAcksEnum.ACK_LEADER.getCode();
+            return KafkaAcksEnum.ACK_LEADER.getCode();
         } else {
-            return KAcksEnum.ACK_NOWAIT.getCode();
+            return KafkaAcksEnum.ACK_NOWAIT.getCode();
         }
     }
 }

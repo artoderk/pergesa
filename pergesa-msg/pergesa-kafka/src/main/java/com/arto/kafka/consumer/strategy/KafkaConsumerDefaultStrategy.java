@@ -1,9 +1,22 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE
+ * file distributed with this work for additional information regarding copyright ownership. The ASF licenses this file
+ * to You under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 package com.arto.kafka.consumer.strategy;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.common.MqTypeEnum;
+import com.arto.core.consumer.strategy.AbstractConsumerStrategy;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.bootstrap.Event;
 import com.arto.event.common.Destroyable;
@@ -29,7 +42,7 @@ import static com.arto.kafka.common.KUtil.buildMessageId;
  * Created by xiong.j on 2017/1/20.
  */
 @Slf4j
-class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy implements KafkaConsumerStrategy, Destroyable {
+class KafkaConsumerDefaultStrategy extends AbstractConsumerStrategy implements KafkaConsumerStrategy, Destroyable {
 
     private final PersistentEventService service;
 
@@ -65,7 +78,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
             // 生成消息ID
             message.setMessageId(buildMessageId(record.partition(), record.offset()));
         } catch (Throwable e) {
-            log.warn("Deserializer record failed, Discard this record:" + record, e);
+            log.warn("Deserializer record failed, record:" + record, e);
             // 持久化消息，以便重试
             infiniteRetry(record, message);
         }
@@ -78,7 +91,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
                     // 消费消息
                     onMessage(config, message);
                 } else {
-                    log.info("Discard redelivered message:" + message);
+                    log.info("Check redeliver is true, discard this message:" + message);
                 }
                 break;
             } catch (Throwable e) {
@@ -114,7 +127,7 @@ class KafkaConsumerDefaultStrategy extends AbstractKafkaConsumerStrategy impleme
         if (failed) {
             throw new MqClientException("Persist message failed when stop server.");
         } else {
-            log.warn("Receive message failed 3 times, persisted message to db waiting for retry. record:" + record);
+            log.warn("Persisted message to db waiting for retry. record:" + record);
         }
     }
 

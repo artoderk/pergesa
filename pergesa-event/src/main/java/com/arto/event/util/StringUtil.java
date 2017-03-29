@@ -54,4 +54,12 @@ public class StringUtil {
         }
         throw new Exception("String size over max size. string:" + value + ", max size:" + maxSize);
     }
+
+    public static String remove(String target, String[] replacement) {
+        String result = target;
+        for (String val : replacement) {
+            result = target.replace(val, "");
+        }
+        return result;
+    }
 }

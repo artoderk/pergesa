@@ -69,7 +69,7 @@ public class KafkaConsumerThread implements Callable{
                 // 提交消费标识
                 currentConsumedRecord = record;
                 //if (config.getPriority() != MessagePriorityEnum.LOW.getCode()) {
-                if (i % config.getAckSize() == 0 || i == records.size() - 1) {
+                if (i % config.getBatchSize() == 0 || i == records.size() - 1) {
                     commitSync(topicPartition, new OffsetAndMetadata(currentConsumedRecord.offset() + 1));
                 }
                 //} else {

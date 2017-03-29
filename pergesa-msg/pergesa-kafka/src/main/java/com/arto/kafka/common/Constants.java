@@ -20,9 +20,6 @@ import com.arto.kafka.event.KafkaProduceEvent;
  */
 public interface Constants {
 
-    /** 消息中间件kafka简写 */
-    String K = "K";
-
     /** 消息中间件kafka */
     String KAFKA = "kafka";
 

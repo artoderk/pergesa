@@ -45,6 +45,5 @@ public interface MqProducer<T> {
      * @param record 消息包装对象
      * @throws MqClientException
      */
-    @Deprecated
     void sendNonTx(MessageRecord<T> record) throws MqClientException;
 }

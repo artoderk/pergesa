@@ -13,6 +13,7 @@
 package com.arto.core.bootstrap;
 
 import com.arto.core.common.DataPipeline;
+import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.config.MqConfigManager;
 import com.arto.core.consumer.ConsumerConfig;
 import com.arto.core.consumer.MqConsumer;
@@ -22,6 +23,7 @@ import com.arto.core.producer.MqProducer;
 import com.arto.core.producer.ProducerConfig;
 import com.arto.event.common.Destroyable;
 import com.arto.event.util.SpringDestroyableUtil;
+import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -79,6 +81,7 @@ public class MqClient implements Destroyable{
      * @return
      */
     public static MqProducer buildProducer(ProducerConfig config){
+        verifyConfig(config);
         if (factoryMap.containsKey(config.getType().getMemo())) {
             return factoryMap.get(config.getType().getMemo()).buildProducer(config);
         } else {
@@ -93,6 +96,7 @@ public class MqClient implements Destroyable{
      * @return
      */
     public static MqConsumer buildConsumer(ConsumerConfig config){
+        verifyConfig(config);
         if (factoryMap.containsKey(config.getType().getMemo())) {
             return factoryMap.get(config.getType().getMemo()).buildConsumer(config);
         } else {
@@ -145,5 +149,22 @@ public class MqClient implements Destroyable{
         }
         factoryMap.clear(); // TODO 为避免启动时MQ连不上，这里可能不能清除
         pipelineMap.clear();
+    }
+
+    private static void verifyConfig(MqConfig config){
+        if (Strings.isNullOrEmpty(config.getDestination())) {
+            throw new MqClientException("Parameter 'dest' can't be null" + config);
+        }
+
+        if (config instanceof ProducerConfig) {
+            ProducerConfig producerConfig = (ProducerConfig) config;
+            if ((producerConfig.getPriority().getCode() > MessagePriorityEnum.LOW.getCode())
+                    || (producerConfig.getPriority().getCode() < MessagePriorityEnum.HIGH.getCode())) {
+                throw new MqClientException("Not support this priority! ProducerConfig:" + producerConfig);
+            }
+            if (producerConfig.getPriority() == MessagePriorityEnum.HIGH && producerConfig.getCallback() != null) {
+                throw new MqClientException("Transaction messages can't send by asynchronous! ProducerConfig:" + producerConfig);
+            }
+        }
     }
 }

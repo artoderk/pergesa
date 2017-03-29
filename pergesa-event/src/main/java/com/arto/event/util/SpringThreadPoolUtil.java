@@ -46,4 +46,8 @@ public class SpringThreadPoolUtil {
         definitionRegistry.registerBeanDefinition(poolBeanName, poolBeanDefinitionBuilder.getRawBeanDefinition());
         return SpringContextHolder.getBean(poolBeanName);
     }
+
+    public static String getPoolName(String name){
+        return name + "-" + "ThreadPoolHandler";
+    }
 }
