@@ -15,7 +15,7 @@ package com.arto.amq.consumer;
 import com.arto.amq.config.AmqConfigManager;
 import com.arto.amq.consumer.binding.AmqConsumerBinding;
 import com.arto.amq.consumer.binding.AmqConsumerConfig;
-import com.arto.amq.util.AmqStringUtil;
+import com.arto.amq.util.AmqUtil;
 import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.util.SpringContextHolder;
@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.apache.activemq.command.ActiveMQTopic;
 import org.apache.activemq.pool.PooledConnectionFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -39,6 +40,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 使用Spring注册消息监听容器
+ *
  * Created by xiong.j on 2017/3/20.
  */
 @Slf4j
@@ -51,61 +54,107 @@ public class AmqMessageConsumer {
     @Qualifier("amqPooledConnectionFactory")
     private PooledConnectionFactory pooledConnectionFactory;
 
-    public AmqConsumerConfig getDestConfig(String destName) {
+    /**
+     * 获取Destination对应的配置信息
+     *
+     * @param destName
+     * @return
+     */
+    AmqConsumerConfig getDestConfig(String destName) {
         return configMap.get(destName);
     }
 
+    /**
+     * 注册消息监听容器
+     *
+     * @param amqConsumerBinding
+     */
     public synchronized void subscribe(final AmqConsumerBinding amqConsumerBinding) {
         AmqConsumerConfig config = amqConsumerBinding.getConfig();
+
         if(configMap.containsKey(config.getDestination())) {
             throw new MqClientException("Duplicated consumer definition. config:" + config);
         } else {
             configMap.put(config.getDestination(), config);
         }
 
+        boolean isPubSubDomain = AmqUtil.isPubSubDomain(config.getDestination());
+
         BeanDefinitionRegistry registry = (BeanDefinitionRegistry) SpringContextHolder.getBeanFactory();
-        /** 注册messageListener */
+
+        /** 注册MessageListener */
+        String messageListener = registerMessageListener(registry);
+
+        /** 注册MessageListenerAdapter */
+        String messageListenerAdapter = registerMessageListenerAdapter(registry, messageListener);
+
+        /** 注册Destination */
+        String destination = registerDestination(registry, config, isPubSubDomain);
+
+        /** 注册DefaultMessageListenerContainer */
+        registerMessageListenerContainer(registry, config, messageListenerAdapter, destination, isPubSubDomain);
+    }
+
+    private String registerMessageListener(BeanDefinitionRegistry registry){
         String beanName = "amqMessageListener" + configMap.size();
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(AmqMessageListener.class);
         builder.addPropertyReference("messageConsumer", "amqMessageConsumer");
         registry.registerBeanDefinition(beanName, builder.getRawBeanDefinition());
+        return beanName;
+    }
 
-        /** 注册MessageListenerAdapter */
-        builder = BeanDefinitionBuilder.genericBeanDefinition(MessageListenerAdapter.class);
-        builder.addConstructorArgReference(beanName);
+    private String registerMessageListenerAdapter(BeanDefinitionRegistry registry, String messageListener){
+        String beanName = "amqMessageListenerAdapter" + configMap.size();
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MessageListenerAdapter.class);
+        builder.addConstructorArgReference(messageListener);
         builder.addPropertyValue("messageConverter", null);
-        beanName = "amqMessageListenerAdapter" + configMap.size();
         registry.registerBeanDefinition(beanName, builder.getRawBeanDefinition());
+        return beanName;
+    }
 
-        /** 注册Destination */
-        String destName = AmqStringUtil.getDestName(config.getDestination());
-        boolean isPubSubDomain = destName.startsWith("T");
-        Destination destination = SpringContextHolder.getBean(destName);
+    private String registerDestination(BeanDefinitionRegistry registry, AmqConsumerConfig config, boolean isPubSubDomain){
+        String destName = AmqUtil.getDestName(config.getDestination());
+        Destination destination;
+        try {
+            destination = SpringContextHolder.getBean(destName);
+        } catch (NoSuchBeanDefinitionException e) {
+            destination = null;
+        }
         if (destination == null) {
+            BeanDefinitionBuilder builder;
             if (isPubSubDomain) {
                 builder = BeanDefinitionBuilder.genericBeanDefinition(ActiveMQTopic.class);
             } else {
                 builder = BeanDefinitionBuilder.genericBeanDefinition(ActiveMQQueue.class);
                 if (config.getPriority() != MessagePriorityEnum.HIGH.getCode()) {
                     // 中低优先级消息批量消费批量确认
-                    config.setDestination(AmqStringUtil.addParamToDest(config.getDestination()
+                    config.setDestination(AmqUtil.addParamToDest(config.getDestination()
                             , "consumer.prefetchSize=" + config.getBatchSize()));
                 } else {
                     // 高优先级消息逐条拉取与确认
-                    config.setDestination(AmqStringUtil.addParamToDest(config.getDestination()
+                    config.setDestination(AmqUtil.addParamToDest(config.getDestination()
                             , "consumer.prefetchSize=" + 1));
                 }
             }
             builder.addConstructorArgValue(config.getDestination());
+            registry.registerBeanDefinition(destName, builder.getRawBeanDefinition());
         }
+        return destName;
+    }
 
-        /** 注册DefaultMessageListenerContainer */
-        ThreadPoolTaskExecutor taskExecutor = null;
-        builder = BeanDefinitionBuilder.genericBeanDefinition(DefaultMessageListenerContainer.class);
+    private String registerMessageListenerContainer(BeanDefinitionRegistry registry, AmqConsumerConfig config
+            , String messageListenerAdapter, String destination, boolean isPubSubDomain){
+        String beanName = "amqMessageListenerContainer" + configMap.size();
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(DefaultMessageListenerContainer.class);
+        builder.setInitMethodName("initialize");
+        builder.setDestroyMethodName("stop");
         builder.addPropertyReference("connectionFactory", "amqPooledConnectionFactory");
-        builder.addPropertyReference("destination", destName);
-        builder.addPropertyReference("messageListener", beanName);
+        builder.addPropertyReference("destination", destination);
+        builder.addPropertyReference("messageListener", messageListenerAdapter);
+        builder.addPropertyValue("receiveTimeout", AmqConfigManager.getInt("activemq.receiveTimeout", 1000));
+
         // 高优先级或TOPIC类消息确保一个Session只有一个消费者，TOPIC永远AutoACK
+        ThreadPoolTaskExecutor taskExecutor = null;
         if (config.getPriority() == MessagePriorityEnum.HIGH.getCode() || isPubSubDomain) {
             taskExecutor = SpringThreadPoolUtil.getNewPool(beanName
                     , AmqConfigManager.getInt("amq.producer.pool.coreSize", 1)
@@ -119,7 +168,7 @@ public class AmqMessageConsumer {
         } else {
             // 中低优先级消息批量消费批量确认
             int coreSize = (int)Math.ceil(config.getNumThreads() * 1.3);
-            taskExecutor = SpringThreadPoolUtil.getNewPool(beanName
+            SpringThreadPoolUtil.getNewPool(beanName
                     , AmqConfigManager.getInt("amq.producer.pool.coreSize", config.getNumThreads())
                     , AmqConfigManager.getInt("amq.producer.pool.maxSize", (int)Math.ceil(coreSize * 1.5))
                     , AmqConfigManager.getInt("amq.producer.pool.queueCapacity", 999)
@@ -127,9 +176,11 @@ public class AmqMessageConsumer {
             builder.addPropertyValue("concurrentConsumers", config.getNumThreads());
             builder.addPropertyValue("SessionAcknowledgeMode", Session.AUTO_ACKNOWLEDGE);
         }
-        builder.addPropertyReference("taskExecutor", taskExecutor.getThreadNamePrefix());
-        beanName = "amqMessageListenerContainer" + configMap.size();
+        builder.addPropertyReference("taskExecutor", SpringThreadPoolUtil.getPoolName(beanName));
         registry.registerBeanDefinition(beanName, builder.getRawBeanDefinition());
-    }
 
+        DefaultMessageListenerContainer container = SpringContextHolder.getBean(beanName);
+        container.start();
+        return beanName;
+    }
 }

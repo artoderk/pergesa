@@ -37,7 +37,7 @@ public class SpringThreadPoolUtil {
         BeanDefinitionRegistry definitionRegistry = (BeanDefinitionRegistry)SpringContextHolder.getBeanFactory();
         definitionRegistry.registerBeanDefinition(name + "-" + "ThreadPoolHandler", rejectedBeanDefinitionBuilder.getRawBeanDefinition());
 
-        String poolBeanName = name + "-" + "ThreadPool";
+        String poolBeanName = getPoolName(name);
         BeanDefinitionBuilder poolBeanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(ThreadPoolTaskExecutor.class);
         poolBeanDefinitionBuilder.addPropertyValue("corePoolSize", corePoolSize);
         poolBeanDefinitionBuilder.addPropertyValue("maxPoolSize", maxPoolSize);
@@ -48,6 +48,6 @@ public class SpringThreadPoolUtil {
     }
 
     public static String getPoolName(String name){
-        return name + "-" + "ThreadPoolHandler";
+        return name + "-" + "ThreadPool";
     }
 }

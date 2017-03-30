@@ -52,7 +52,8 @@ public class AmqSpringRegister {
         }
 
         BeanDefinitionRegistry registry = (BeanDefinitionRegistry) SpringContextHolder.getBeanFactory();
-        // 注册ActiveMQConnectionFactory
+        
+        /** 注册ActiveMQConnectionFactory */
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ActiveMQConnectionFactory.class);
         builder.addPropertyValue("brokerURL", brokerURL);
         if (Strings.isNullOrEmpty(userName)) {
@@ -61,24 +62,25 @@ public class AmqSpringRegister {
         }
         // 优化ACK提交，仅在ack=auto时有效
         builder.addPropertyValue("optimizeAcknowledge", "true");
-        //builder.addPropertyValue("optimizeAcknowledgeTimeOut", "10000");
-        builder.addPropertyValue("optimizedAckScheduledAckInterval", "10000");
+        builder.addPropertyValue("optimizeAcknowledgeTimeOut", "10000");
+        //builder.addPropertyValue("optimizedAckScheduledAckInterval", "10000");
         registry.registerBeanDefinition("amqConnectionFactory", builder.getRawBeanDefinition());
 
-        // 注册PooledConnectionFactory
+        /** 注册PooledConnectionFactory */
         builder = BeanDefinitionBuilder.genericBeanDefinition(PooledConnectionFactory.class);
         builder.addPropertyValue("maxConnections", maxConnections);
         builder.addPropertyValue("maximumActiveSessionPerConnection", maximumActiveSessionPerConnection);
+        builder.addPropertyValue("idleTimeout", AmqConfigManager.getInt("activemq.idleTimeout", 120000));
         builder.addPropertyReference("connectionFactory", "amqConnectionFactory");
         builder.setDestroyMethodName("stop");
         registry.registerBeanDefinition("amqPooledConnectionFactory", builder.getRawBeanDefinition());
 
-        // 注册BeanFactoryDestinationResolver
+        /** 注册BeanFactoryDestinationResolver */
         builder = BeanDefinitionBuilder.genericBeanDefinition(BeanFactoryDestinationResolver.class);
         builder.addConstructorArgValue(SpringContextHolder.getBeanFactory());
         registry.registerBeanDefinition("beanFactoryDestinationResolver", builder.getRawBeanDefinition());
 
-        // 注册JmsTemplate
+        /** 注册JmsTemplate */
         builder = BeanDefinitionBuilder.genericBeanDefinition(AmqJmsTemplate.class);
         builder.addPropertyReference("connectionFactory", "amqPooledConnectionFactory");
         builder.addPropertyReference("destinationResolver", "beanFactoryDestinationResolver");

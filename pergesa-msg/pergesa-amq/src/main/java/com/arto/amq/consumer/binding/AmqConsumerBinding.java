@@ -12,12 +12,11 @@
  */
 package com.arto.amq.consumer.binding;
 
+import com.arto.amq.consumer.AmqMessageConsumer;
 import com.arto.core.consumer.MqConsumer;
 import com.arto.core.consumer.MqListener;
 import com.arto.event.util.SpringContextHolder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by xiong.j on 2017/1/17.
@@ -29,20 +28,19 @@ public class AmqConsumerBinding implements MqConsumer {
     private final AmqConsumerConfig config;
 
     /** Amq消费者 */
-    private final Object consumer;
-
-    /** 消费线程关闭Flag */
-    private final AtomicBoolean closeFlag = new AtomicBoolean(false);
+    private final AmqMessageConsumer consumer;
 
     public AmqConsumerBinding(AmqConsumerConfig config) {
         this.config = config;
-        this.consumer = SpringContextHolder.getBean("kafkaMessageConsumer");
+        this.consumer = SpringContextHolder.getBean("amqMessageConsumer");
+        consumer.subscribe(this);
     }
 
     @Override
     @Deprecated
     public void receive(Class type, MqListener listener) {
         config.setListener(listener);
+        consumer.subscribe(this);
     }
 
     @Override
@@ -50,9 +48,11 @@ public class AmqConsumerBinding implements MqConsumer {
     public void receiveWithParallel(Class type, int numThreads, MqListener listener) {
         config.setListener(listener);
         config.setNumThreads(numThreads);
+        consumer.subscribe(this);
     }
 
     public void close(){}
+
     /**
      * 获取绑定的配置
      *
@@ -61,8 +61,5 @@ public class AmqConsumerBinding implements MqConsumer {
     public AmqConsumerConfig getConfig() {
         return config;
     }
-
-
-
 
 }

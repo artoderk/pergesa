@@ -144,7 +144,7 @@ class AmqConsumerDefaultStrategy extends AbstractConsumerStrategy implements Amq
         // 目的地
         event.setDestination(((ActiveMQDestination)textMessage.getJMSDestination()).getPhysicalName());
         // 消息类型
-        event.setType(MqTypeEnum.KAFKA.getMemo());
+        event.setType(MqTypeEnum.ACTIVEMQ.getMemo());
         // 是否持久化
         event.setPersistent(true);
         if (message == null) {

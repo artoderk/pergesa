@@ -19,7 +19,7 @@ import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import static com.arto.kafka.common.KUtil.buildMessageId;
+import static com.arto.kafka.util.KafkaUtil.buildMessageId;
 
 /**
  * 普通消费模式，消息消费失败会重试三次，然后丢弃消息。适合容忍消息丢失的普通消息

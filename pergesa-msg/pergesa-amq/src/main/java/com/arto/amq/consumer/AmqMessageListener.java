@@ -27,6 +27,7 @@ import javax.jms.TextMessage;
 @Slf4j
 public class AmqMessageListener {
 
+    /** 消息者 */
     private AmqMessageConsumer messageConsumer;
 
     /**
@@ -37,9 +38,12 @@ public class AmqMessageListener {
      */
     public void handleMessage(TextMessage message) throws Exception{
         try {
+            // 获取目的地名
             String destName = ((ActiveMQDestination)message.getJMSDestination()).getPhysicalName();
+            // 获取目的地配置
             AmqConsumerConfig config = messageConsumer.getDestConfig(destName);
-            AmqConsumerStrategyFactory.getInstance().getStrategy(message.getJMSPriority()).onMessage(config, message);
+            // 消费消息
+            AmqConsumerStrategyFactory.getInstance().getStrategy(config.getPriority()).onMessage(config, message);
         } catch (JMSException e) {
             log.error("Consume message failed.", e);
             throw e;

@@ -48,9 +48,9 @@
 
     <import resource="pergesa-event.xml" />
 
-    <jms:listener-container connection-factory="pooledConnectionFactory"
+    <!--<jms:listener-container connection-factory="pooledConnectionFactory"
                             concurrency="3" task-executor="jmsReceiveTaskExecutor"
                             prefetch="5" acknowledge="transacted">
         <jms:listener destination="queue.admin.pushmsg.instant?consumer.prefetchSize=5" ref="queuePushmsgInstantListenerAdapter"/>
-    </jms:listener-container>
+    </jms:listener-container>-->
 </beans>

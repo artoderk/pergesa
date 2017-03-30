@@ -18,7 +18,7 @@ import com.arto.kafka.consumer.binding.KafkaConsumerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
-import static com.arto.kafka.common.KUtil.buildMessageId;
+import static com.arto.kafka.util.KafkaUtil.buildMessageId;
 
 /**
  * 低优先级消费模式，消息出错直接丢弃，适合容忍消息丢失的非重要消息

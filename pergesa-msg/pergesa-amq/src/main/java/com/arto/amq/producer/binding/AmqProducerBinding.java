@@ -14,7 +14,7 @@ package com.arto.amq.producer.binding;
 
 import com.arto.amq.common.AmqConstants;
 import com.arto.amq.event.AmqProduceEvent;
-import com.arto.amq.util.AmqStringUtil;
+import com.arto.amq.util.AmqUtil;
 import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.DataPipeline;
 import com.arto.core.common.MessageRecord;
@@ -126,7 +126,7 @@ public class AmqProducerBinding implements MqProducer {
         // 注册TOPIC或QUEUE
         BeanDefinitionRegistry registry = (BeanDefinitionRegistry) SpringContextHolder.getBeanFactory();
         BeanDefinitionBuilder builder;
-        String destName = AmqStringUtil.getDestName(config.getDestination());
+        String destName = AmqUtil.getDestName(destination);
         if (destName.startsWith("T") || destName.startsWith("t")) {
             // 以"T"或"t"开头为TOPIC
             builder = BeanDefinitionBuilder.genericBeanDefinition(ActiveMQTopic.class);

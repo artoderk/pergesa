@@ -26,7 +26,7 @@ public class TestMqProducer extends DefaultTestCase {
 
     @Test
     public void sendOnce() throws Exception {
-        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("pegesa-test-high", MessagePriorityEnum.HIGH));
+        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("q-pegesa-test-high", MessagePriorityEnum.HIGH));
 
         List<String> list = new ArrayList<String>();
         list.add("Test1");
@@ -45,7 +45,7 @@ public class TestMqProducer extends DefaultTestCase {
 
     @Test
     public void send10000() throws Exception {
-        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("pegesa-test-low", MessagePriorityEnum.LOW));
+        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("q-test", MessagePriorityEnum.LOW));
 
         List<String> list = new ArrayList<String>();
         list.add("Test1");
@@ -65,12 +65,13 @@ public class TestMqProducer extends DefaultTestCase {
             e.printStackTrace();
         }
         // Producer是懒加载，计数不准
-        System.out.println(System.currentTimeMillis() - start);
+        System.out.println("send10000 spent:" + (System.currentTimeMillis() - start));
+        Thread.sleep(10000);
     }
 
     @Test
     public void sendTx() throws Exception {
-        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("test", MessagePriorityEnum.HIGH));
+        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("q-test", MessagePriorityEnum.MEDIUM));
 
         List<String> list = new ArrayList<String>();
         list.add("Test1");

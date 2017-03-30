@@ -15,7 +15,7 @@ package com.arto.kafka.producer;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.util.StringUtil;
 import com.arto.kafka.common.KafkaMessageRecord;
-import com.arto.kafka.common.KUtil;
+import com.arto.kafka.util.KafkaUtil;
 import com.arto.kafka.config.KafkaConfigManager;
 import com.arto.kafka.event.KafkaProduceEvent;
 import com.google.common.base.Strings;
@@ -105,7 +105,7 @@ public class KafkaMessageProducer {
                 public void onCompletion(RecordMetadata metadata, Exception exception) {
                     // 设置MessageId
                     KafkaMessageRecord kafkaMessageRecord = (KafkaMessageRecord)event.getPayload();
-                    kafkaMessageRecord.setMessageId(KUtil.buildMessageId(metadata.partition(), metadata.offset()));
+                    kafkaMessageRecord.setMessageId(KafkaUtil.buildMessageId(metadata.partition(), metadata.offset()));
                     event.getCallback().onCompletion(event);
                 }
             });

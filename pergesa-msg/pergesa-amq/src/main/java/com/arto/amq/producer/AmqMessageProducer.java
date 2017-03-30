@@ -16,7 +16,7 @@ import com.arto.amq.bootstrap.AmqJmsTemplate;
 import com.arto.amq.bootstrap.AmqSpringRegister;
 import com.arto.amq.config.AmqConfigManager;
 import com.arto.amq.event.AmqProduceEvent;
-import com.arto.amq.util.AmqStringUtil;
+import com.arto.amq.util.AmqUtil;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.util.SpringThreadPoolUtil;
 import com.arto.event.util.StringUtil;
@@ -47,7 +47,7 @@ public class AmqMessageProducer {
     private AmqSpringRegister connectionFactory;
 
     /** 消息发送线程池 */
-    private ExecutorService executor;
+    private volatile ExecutorService executor;
 
     /** activemq发送的消息最大容量，默认10M */
     private int messageMaxSize = AmqConfigManager.getInt("activemq.message.maxSize", 10485760);
@@ -96,12 +96,13 @@ public class AmqMessageProducer {
         try {
             final String message = StringUtil.checkSize(event.getPayload(), messageMaxSize);
 
+            int priority = AmqUtil.convert2AmqPriority(event.getPriority());
             if (destination != null) {
                 jmsTemplate.send(destination, new TextMessage(message)
-                        , event.getDeliveryMode(), -1, event.getTimeToLive());
+                        , event.getDeliveryMode(), priority, event.getTimeToLive());
             } else {
-                jmsTemplate.send(AmqStringUtil.getDestName(event.getDestination())
-                        , new TextMessage(message), event.getDeliveryMode(), -1, event.getTimeToLive());
+                jmsTemplate.send(AmqUtil.getDestName(event.getDestination())
+                        , new TextMessage(message), event.getDeliveryMode(), priority, event.getTimeToLive());
             }
         } catch (Throwable e) {
             throw new MqClientException(e);
@@ -126,12 +127,13 @@ public class AmqMessageProducer {
         if (executor == null){
             synchronized (AmqMessageProducer.class){
                 if (executor == null) {
-                    return SpringThreadPoolUtil.getNewPool("AmqSend"
+                    executor = SpringThreadPoolUtil.getNewPool("AmqAsyncSend"
                             , AmqConfigManager.getInt("amq.producer.pool.coreSize", 3)
                             , AmqConfigManager.getInt("amq.producer.pool.maxSize", 6)
                             , AmqConfigManager.getInt("amq.producer.pool.queueCapacity", 999)
                             , null).getThreadPoolExecutor();
                 }
+                return executor;
             }
         }
         return executor;

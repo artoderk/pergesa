@@ -33,7 +33,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.arto.kafka.common.KUtil.buildMessageId;
+import static com.arto.kafka.util.KafkaUtil.buildMessageId;
 
 /**
  * 默认消费模式，适合重要消息
