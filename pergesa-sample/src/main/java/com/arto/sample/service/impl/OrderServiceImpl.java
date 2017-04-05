@@ -4,6 +4,7 @@ import com.arto.core.annotation.Producer;
 import com.arto.core.annotation.TxMessage;
 import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
+import com.arto.core.common.MqTypeEnum;
 import com.arto.core.producer.MqCallback;
 import com.arto.core.producer.MqProducer;
 import com.arto.sample.dao.OrderDao;
@@ -19,7 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderServiceImpl implements OrderService{
 
-    @Producer(destination = "pegesa-test", priority = MessagePriorityEnum.HIGH)
+    //@Producer(destination = "pegesa-test", priority = MessagePriorityEnum.HIGH)
+    @Producer(type = MqTypeEnum.ACTIVEMQ, destination = "q-test", priority = MessagePriorityEnum.HIGH)
     private MqProducer<OrderDO> producer;
 
 //    private KafkaProducerConfig config = new KafkaProducerConfig("pegesa-test", MessagePriorityEnum.HIGH);

@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 
 /**
- * 简化使用Spring-jms时的一堆配置
+ * 注册Activemq连接池与JmsTemplate
  *
  * Created by xiong.j on 2017/3/21.
  */
@@ -52,7 +52,7 @@ public class AmqSpringRegister {
         }
 
         BeanDefinitionRegistry registry = (BeanDefinitionRegistry) SpringContextHolder.getBeanFactory();
-        
+
         /** 注册ActiveMQConnectionFactory */
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ActiveMQConnectionFactory.class);
         builder.addPropertyValue("brokerURL", brokerURL);
@@ -61,9 +61,9 @@ public class AmqSpringRegister {
             builder.addPropertyValue("password", password);
         }
         // 优化ACK提交，仅在ack=auto时有效
-        builder.addPropertyValue("optimizeAcknowledge", "true");
-        builder.addPropertyValue("optimizeAcknowledgeTimeOut", "10000");
-        //builder.addPropertyValue("optimizedAckScheduledAckInterval", "10000");
+        builder.addPropertyValue("optimizeAcknowledge",  AmqConfigManager.getBoolean("activemq.optimizeAcknowledge", true));
+        builder.addPropertyValue("optimizeAcknowledgeTimeOut", AmqConfigManager.getInt("activemq.optimizedAckScheduledAckInterval", 10000));
+        builder.addPropertyValue("optimizedAckScheduledAckInterval", AmqConfigManager.getInt("activemq.optimizedAckScheduledAckInterval", 0));
         registry.registerBeanDefinition("amqConnectionFactory", builder.getRawBeanDefinition());
 
         /** 注册PooledConnectionFactory */

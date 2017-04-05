@@ -12,6 +12,7 @@
  */
 package com.arto.amq.consumer;
 
+import com.arto.amq.bootstrap.AmqSpringRegister;
 import com.arto.amq.config.AmqConfigManager;
 import com.arto.amq.consumer.binding.AmqConsumerBinding;
 import com.arto.amq.consumer.binding.AmqConsumerConfig;
@@ -23,15 +24,12 @@ import com.arto.event.util.SpringThreadPoolUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.apache.activemq.command.ActiveMQTopic;
-import org.apache.activemq.pool.PooledConnectionFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.jms.listener.DefaultMessageListenerContainer;
 import org.springframework.jms.listener.adapter.MessageListenerAdapter;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.jms.Destination;
@@ -51,8 +49,7 @@ public class AmqMessageConsumer {
     private Map<String, AmqConsumerConfig> configMap = new HashMap<String, AmqConsumerConfig>();
 
     @Autowired
-    @Qualifier("amqPooledConnectionFactory")
-    private PooledConnectionFactory pooledConnectionFactory;
+    private AmqSpringRegister amqSpringRegister;
 
     /**
      * 获取Destination对应的配置信息
@@ -153,20 +150,20 @@ public class AmqMessageConsumer {
         builder.addPropertyReference("messageListener", messageListenerAdapter);
         builder.addPropertyValue("receiveTimeout", AmqConfigManager.getInt("activemq.receiveTimeout", 1000));
 
-        // 高优先级或TOPIC类消息确保一个Session只有一个消费者，TOPIC永远AutoACK
-        ThreadPoolTaskExecutor taskExecutor = null;
+        // 高优先级QUEUE或TOPIC类消息确保一个Session只有一个消费者，TOPIC永远AutoACK
         if (config.getPriority() == MessagePriorityEnum.HIGH.getCode() || isPubSubDomain) {
-            taskExecutor = SpringThreadPoolUtil.getNewPool(beanName
+            SpringThreadPoolUtil.getNewPool(beanName
                     , AmqConfigManager.getInt("amq.producer.pool.coreSize", 1)
                     , AmqConfigManager.getInt("amq.producer.pool.maxSize", 1)
                     , AmqConfigManager.getInt("amq.producer.pool.queueCapacity", 10)
                     , null);
             builder.addPropertyValue("concurrentConsumers", 1);
             if (!isPubSubDomain) {
+                builder.addPropertyValue("sessionTransacted", true );
                 builder.addPropertyValue("SessionAcknowledgeMode", Session.SESSION_TRANSACTED);
             }
         } else {
-            // 中低优先级消息批量消费批量确认
+            // 中低优先级QUEUE消息批量消费批量确认
             int coreSize = (int)Math.ceil(config.getNumThreads() * 1.3);
             SpringThreadPoolUtil.getNewPool(beanName
                     , AmqConfigManager.getInt("amq.producer.pool.coreSize", config.getNumThreads())

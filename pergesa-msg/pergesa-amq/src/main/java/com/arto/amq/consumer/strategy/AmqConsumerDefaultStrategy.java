@@ -156,16 +156,14 @@ class AmqConsumerDefaultStrategy extends AbstractConsumerStrategy implements Amq
                 event.setBusinessType(jsonObject.getString("businessType"));
             } else {
                 // 业务流水号为消息ID
-                event.setBusinessId(textMessage.getJMSMessageID());
+                event.setBusinessId(event.getMessageId());
             }
             // 消息解析出错时消息设为json对象
             event.setPayload(jsonObject);
         } else {
-            // 设置消息Id
-            event.setMessageId(message.getMessageId());
             if (Strings.isNullOrEmpty(message.getBusinessId())) {
                 // 以非事务消息发送时业务流水号为消息ID
-                event.setBusinessId(message.getMessageId());
+                event.setBusinessId(event.getMessageId());
             } else {
                 // 消息自带业务流水号
                 event.setBusinessId(message.getBusinessId());

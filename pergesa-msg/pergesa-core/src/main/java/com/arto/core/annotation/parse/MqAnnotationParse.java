@@ -21,6 +21,7 @@ import org.springframework.aop.framework.Advised;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -30,6 +31,7 @@ import java.util.*;
  * Created by xiong.j on 17/2/15.
  */
 @Slf4j
+@Component
 public class MqAnnotationParse implements InitializingBean, BeanPostProcessor {
 
     // 消费者注解去重用
@@ -92,18 +94,23 @@ public class MqAnnotationParse implements InitializingBean, BeanPostProcessor {
     private void parseConsumer(Object bean, Method method) {
         Consumer annotation = method.getAnnotation(Consumer.class);
         if (annotation != null) {
-            String type = annotation.type().getMemo();
+            String type = getType(annotation.type().getMemo());
             getStrategy(type).parseConsumer(keySet.get(type), bean, method);
         }
     }
 
     private MqParseStrategy getStrategy(String type){
+        return strategyMap.get(getType(type));
+    }
+
+    private String getType(String type) {
         if (type.equals(MqTypeEnum.UNKNOWN.getMemo())) {
             // 没有标注则取默认实现
-            return strategyMap.get(defaultType);
+            return defaultType;
         } else {
-            return strategyMap.get(type);
+            return type;
         }
+
     }
 
     private Object getTargetBean(Object bean) {

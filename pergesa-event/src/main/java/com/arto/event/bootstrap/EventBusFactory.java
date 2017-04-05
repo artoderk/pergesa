@@ -83,7 +83,6 @@ public final class EventBusFactory {
             group = event.getClass().getName();
         }
         if (itemMap.containsKey(group)) {
-
             itemMap.get(group).post(event);
         } else {
             throw new EventException("This event has no EventBus instance.");

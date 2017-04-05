@@ -25,7 +25,6 @@ import com.arto.core.exception.MqClientException;
 import com.arto.core.producer.MqProducer;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -38,7 +37,6 @@ import java.util.Set;
  * Created by xiong.j on 2017/2/17.
  */
 @Slf4j
-@Component
 public class AmqAnnotationParse implements MqParseStrategy {
 
     @Override

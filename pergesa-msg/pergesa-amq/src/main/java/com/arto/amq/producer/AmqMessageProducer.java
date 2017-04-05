@@ -44,7 +44,7 @@ public class AmqMessageProducer {
     private AmqJmsTemplate jmsTemplate;
 
     @Autowired
-    private AmqSpringRegister connectionFactory;
+    private AmqSpringRegister amqSpringRegister;
 
     /** 消息发送线程池 */
     private volatile ExecutorService executor;

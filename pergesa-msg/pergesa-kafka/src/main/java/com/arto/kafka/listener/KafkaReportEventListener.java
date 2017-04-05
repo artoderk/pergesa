@@ -60,6 +60,7 @@ public class KafkaReportEventListener implements EventListener<Event<String>> {
         return Constants.KAFKA;
     }
 
+    @SuppressWarnings("unchecked")
     private KafkaProduceEvent convert2(Event<String> event){
         KafkaProduceEvent produceEvent = new KafkaProduceEvent();
         produceEvent.setDestination(KafkaConfigManager.getString("event.failed.report.dest"

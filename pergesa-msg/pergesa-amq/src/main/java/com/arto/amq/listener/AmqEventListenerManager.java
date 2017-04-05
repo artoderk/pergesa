@@ -12,6 +12,7 @@
  */
 package com.arto.amq.listener;
 
+import com.arto.amq.event.AmqConsumeEvent;
 import com.arto.amq.event.AmqProduceEvent;
 import com.arto.event.bootstrap.EventBusFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +31,13 @@ public class AmqEventListenerManager {
     private AmqProduceEventListener amqProduceEventListener;
 
     /** 消息需消费事件监听器 */
-//    @Autowired
-//    private AmqConsumeEventListener amqConsumeEventListener;
+    @Autowired
+    private AmqConsumeEventListener amqConsumeEventListener;
 
     @PostConstruct
     public void init() throws Exception {
         // 注册事件
         EventBusFactory.getInstance().register(AmqProduceEvent.class, amqProduceEventListener);
-//        EventBusFactory.getInstance().register(AmqConsumeEvent.class, amqConsumeEventListener);
+        EventBusFactory.getInstance().register(AmqConsumeEvent.class, amqConsumeEventListener);
     }
 }
