@@ -23,6 +23,7 @@ import com.arto.core.consumer.strategy.AbstractConsumerStrategy;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.bootstrap.Event;
 import com.arto.event.common.Destroyable;
+import com.arto.event.serialization.JsonSerializer;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.event.util.SpringDestroyableUtil;
@@ -49,10 +50,14 @@ class AmqConsumerDefaultStrategy extends AbstractConsumerStrategy implements Amq
     /** 消息拉取线程关闭Flag */
     private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 
+    /** 序列化类 */
+    private final JsonSerializer serializer;
+
     AmqConsumerDefaultStrategy(){
         this.service = SpringContextHolder.getBean("persistentEventService");
         // 注册勾子
-        SpringDestroyableUtil.add("kafkaConsumerDefaultStrategy", this);
+        SpringDestroyableUtil.add("amqConsumerDefaultStrategy", this);
+        serializer = new JsonSerializer();
     }
 
     @Override
@@ -66,7 +71,7 @@ class AmqConsumerDefaultStrategy extends AbstractConsumerStrategy implements Amq
     @Override
     public void destroy() {
         closeFlag.set(true);
-        log.info("Destroy KafkaConsumerDefaultStrategy successful.");
+        log.info("Destroy amqConsumerDefaultStrategy successful.");
     }
 
     @SuppressWarnings("unchecked")
@@ -113,7 +118,7 @@ class AmqConsumerDefaultStrategy extends AbstractConsumerStrategy implements Amq
         // 无限重试直到持久化成功
         while (!closeFlag.get()){
             try {
-                service.persist(event, AmqConstants.A_CONSUME_EVENT_BEAN);
+                service.persist(event, serializer, AmqConstants.A_CONSUME_EVENT_BEAN);
                 failed = false;
                 break;
             } catch (Throwable e) {

@@ -56,7 +56,7 @@ public class KafkaConsumerStrategyFactory {
         return createStrategy(priority);
     }
 
-    private KafkaConsumerStrategy createStrategy(final int priority) {
+    private synchronized KafkaConsumerStrategy createStrategy(final int priority) {
         if (strategyMap.containsKey(priority)) {
             if (strategyMap.get(priority) != null) {
                 return strategyMap.get(priority).get();

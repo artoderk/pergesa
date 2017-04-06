@@ -12,7 +12,9 @@
  */
 package com.arto.amq.producer.binding;
 
+import com.alibaba.fastjson.serializer.PropertyFilter;
 import com.arto.amq.common.AmqConstants;
+import com.arto.amq.config.AmqConfigManager;
 import com.arto.amq.event.AmqProduceEvent;
 import com.arto.amq.util.AmqUtil;
 import com.arto.core.bootstrap.MqClient;
@@ -24,8 +26,10 @@ import com.arto.core.exception.MqClientException;
 import com.arto.core.intercepter.TxMessageContextHolder;
 import com.arto.core.producer.MqProducer;
 import com.arto.event.bootstrap.EventBusFactory;
+import com.arto.event.serialization.JsonSerializer;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
+import com.arto.event.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.activemq.command.ActiveMQQueue;
 import org.apache.activemq.command.ActiveMQTopic;
@@ -51,6 +55,12 @@ public class AmqProducerBinding implements MqProducer {
     /** 持久化事件服务 */
     private final PersistentEventService service;
 
+    /** 消息最大Size*/
+    private final int maxSize;
+
+    /** 序列化类 */
+    private final JsonSerializer serializer;
+
     static {
         // 注册事务消息发送线程
         new Thread(new AmqTxMessageSendThread(), "AmqTxMessageSendThread").start();
@@ -62,6 +72,9 @@ public class AmqProducerBinding implements MqProducer {
         this.config = config;
         // 暂时依赖Spring获取
         this.service = SpringContextHolder.getBean("persistentEventService");
+        // 默认1M
+        maxSize = AmqConfigManager.getInt("activemq.message.maxsize", 1048576);
+        serializer = new JsonSerializer(new AmqProduceMsgPropertyFilter(), -1);
     }
 
     /**
@@ -143,16 +156,22 @@ public class AmqProducerBinding implements MqProducer {
             throw new MqClientException("Message can't be null or blank");
         }
 
-        // 转换为事件
-        AmqProduceEvent event = buildEvent(record, isTransaction);
-        if (event.isPersistent()) {
-            // 持久化消息直接持久化(模拟客户端两阶段提交)
-            service.persist(event, AmqConstants.AMQ_EVENT_BEAN);
-            // 加入线程上下文，等待事务正常结束后加入发送Queue处理(避免定时调度的延迟，调度默认10分钟执行一次)
-            TxMessageContextHolder.setTxMessage(event);
-        } else {
-            // 非持久化消息直接发送
-            EventBusFactory.getInstance().post(event);
+        try {
+            // 检查消息大小
+            StringUtil.checkSize(record, maxSize);
+            // 转换为事件
+            AmqProduceEvent event = buildEvent(record, isTransaction);
+            if (event.isPersistent()) {
+                // 持久化消息直接持久化(模拟客户端两阶段提交)
+                service.persist(event, serializer, AmqConstants.AMQ_EVENT_BEAN);
+                // 加入线程上下文，等待事务正常结束后加入发送Queue处理(避免定时调度的延迟，调度默认10分钟执行一次)
+                TxMessageContextHolder.setTxMessage(event);
+            } else {
+                // 非持久化消息直接发送
+                EventBusFactory.getInstance().post(event);
+            }
+        } catch (Throwable t){
+            throw new MqClientException("Send message failed. message:" + record, t);
         }
     }
 
@@ -199,6 +218,24 @@ public class AmqProducerBinding implements MqProducer {
                     log.warn("Send message failed.", t);
                 }
             }
+        }
+    }
+
+    private static class AmqProduceMsgPropertyFilter implements PropertyFilter {
+
+        @Override
+        public boolean apply(Object object, String name, Object value) {
+            if(name.equalsIgnoreCase("deliveryMode")){
+                if ((Integer)value == -1) {
+                    return false;
+                }
+            }
+            if(name.equalsIgnoreCase("timeToLive")){
+                if ((Long)value == -1) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

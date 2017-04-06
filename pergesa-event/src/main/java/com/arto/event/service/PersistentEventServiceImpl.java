@@ -12,7 +12,6 @@
  */
 package com.arto.event.service;
 
-import com.alibaba.fastjson.JSON;
 import com.arto.event.bootstrap.Event;
 import com.arto.event.bootstrap.EventBusFactory;
 import com.arto.event.bootstrap.EventContext;
@@ -21,10 +20,10 @@ import com.arto.event.common.EventStatusEnum;
 import com.arto.event.config.ConfigManager;
 import com.arto.event.exception.EventException;
 import com.arto.event.exception.PersistentEventLockException;
+import com.arto.event.serialization.Serializer;
 import com.arto.event.storage.EventInfo;
 import com.arto.event.storage.EventStorage;
 import com.arto.event.util.DateUtil;
-import com.arto.event.util.StringUtil;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,12 +51,13 @@ public class PersistentEventServiceImpl implements PersistentEventService {
      * 持久化Event
      *
      * @param event
+     * @param serializer
      * @param type
      * @throws
      */
     @Transactional
     @Override
-    public void persist(Event event, String type) throws EventException {
+    public void persist(Event event, Serializer serializer, String type) throws EventException {
         if (Strings.isNullOrEmpty(event.getBusinessId()) || Strings.isNullOrEmpty(event.getBusinessType())) {
             throw new EventException("'businessId' and 'businessType' can't be null or blank.");
         }
@@ -66,7 +66,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         }
 
         try {
-            EventInfo eventInfo = eventStorage.create(event2Info(event, type));
+            EventInfo eventInfo = eventStorage.create(event2Info(event, serializer, type));
             if (eventInfo.getId() != -1) {
                 event.setEventContext(new EventContext(eventInfo));
             }
@@ -194,7 +194,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         }
     }
 
-    private EventInfo event2Info(Event event, String type) throws Exception {
+    private EventInfo event2Info(Event event, Serializer serializer, String type) throws Exception {
         EventInfo info = new EventInfo();
         // Tag(事件分片数)
         info.setTag(random.nextInt(ConfigManager.getInt("event.storage.tag", 10)));
@@ -208,8 +208,8 @@ public class PersistentEventServiceImpl implements PersistentEventService {
         info.setEventType(type);
         // 事件状态
         info.setStatus(EventStatusEnum.WAIT.getCode());
-        // 事件内容 使用fastjson序列化 并检测是否超过1M
-        info.setPayload(StringUtil.checkSize(JSON.toJSONString(event), 1048576));
+        // 事件内容 使用传入的方式序列化
+        info.setPayload(serializer.serializer(event));
         // 重试次数
         if (event.isPersistent() && event.getRetry() == 0) {
             // 持久化事件且没有设定重试次数的情况下，使用默认次数

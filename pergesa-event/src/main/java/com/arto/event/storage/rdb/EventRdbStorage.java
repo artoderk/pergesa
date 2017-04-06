@@ -107,7 +107,9 @@ public class EventRdbStorage implements EventStorage {
 
 	@Override
 	public int delete(EventInfo eventInfo) {
-		return 0;
+		StringBuilder builder = new StringBuilder();
+		builder.append("DELETE FROM EVENT_STORAGE WHERE STATUS IN(2, 3) AND GMT_MODIFIED < :gmtModified ");
+		return npJdbcTemplate.update(builder.toString(), new BeanPropertySqlParameterSource(eventInfo));
 	}
 
 	@Override

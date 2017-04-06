@@ -56,7 +56,7 @@ public class AmqConsumerStrategyFactory {
         return createStrategy(priority);
     }
 
-    private AmqConsumerStrategy createStrategy(final int priority) {
+    private synchronized AmqConsumerStrategy createStrategy(final int priority) {
         if (strategyMap.containsKey(priority)) {
             if (strategyMap.get(priority) != null) {
                 return strategyMap.get(priority).get();
@@ -69,14 +69,14 @@ public class AmqConsumerStrategyFactory {
                 // 重要消息，重试三次后入库等待重试
                 strategy = new AmqConsumerDefaultStrategy();
                 break;
-            /*case 2:
+            case 2:
                 // 普通消息，重试三次后丢弃消息
                 strategy = new AmqConsumerMediumPriorityStrategy();
                 break;
             case 3:
                 // 不重要消息，出错即丢弃消息
                 strategy = new AmqConsumerLowPriorityStrategy();
-                break;*/
+                break;
             default:
                 strategy = new AmqConsumerDefaultStrategy();
         }

@@ -1,7 +1,7 @@
 import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.consumer.MqListener;
-import com.arto.event.recovery.EventRecoveryService;
+import com.arto.event.service.EventRecoveryService;
 import com.arto.event.storage.EventInfo;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.kafka.consumer.binding.KafkaConsumerConfig;

@@ -60,8 +60,8 @@ public class KafkaMessageProducer {
         ProducerRecord<String, String> producerRecord = null;
 
         try {
-            // 序列化消息 并检测是否超过1M
-            String payload = StringUtil.checkSize(event.getPayload(), 1048576);
+            // 序列化消息
+            String payload = StringUtil.toJsonString(event.getPayload());
             if (event.getPartition() == -1) {
                 // 没有设置分区
                 if (Strings.isNullOrEmpty(event.getKey())) {

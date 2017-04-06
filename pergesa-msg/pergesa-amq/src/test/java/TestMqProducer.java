@@ -45,19 +45,19 @@ public class TestMqProducer extends DefaultTestCase {
 
     @Test
     public void send10000() throws Exception {
-        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("q-test", MessagePriorityEnum.LOW));
+        MqProducer producer = MqClient.buildProducer(new AmqProducerConfig("q-test-low", MessagePriorityEnum.LOW));
 
         List<String> list = new ArrayList<String>();
         list.add("Test1");
         list.add("Test2");
-        TestMessageBean bean = new TestMessageBean();
-        bean.setId(1);
-        bean.setName("TestMessageBean");
-        bean.setList(list);
+
 
         long start = System.currentTimeMillis();
         try {
-            for (int i = 1; i< 10000; i++) {
+            for (int i = 1; i<= 10; i++) {
+                TestMessageBean bean = new TestMessageBean();
+                bean.setName("TestMessageBean");
+                bean.setList(list);
                 bean.setId(i);
                 producer.send(bean);
             }

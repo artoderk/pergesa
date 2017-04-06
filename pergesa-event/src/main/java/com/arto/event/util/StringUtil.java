@@ -26,7 +26,7 @@ import java.util.Iterator;
 public class StringUtil {
 
     public static String join(Collection var0, String var1) {
-        StringBuffer var2 = new StringBuffer();
+        StringBuilder var2 = new StringBuilder();
 
         for(Iterator var3 = var0.iterator(); var3.hasNext(); var2.append(String.valueOf(var3.next()))) {
             if(var2.length() != 0) {
@@ -44,15 +44,21 @@ public class StringUtil {
         if (obj instanceof String) {
             value = (String)obj;
         } else {
-            value = JSON.toJSONString(obj);
+            value = toJsonString(obj);
         }
 
-        if (Strings.isNullOrEmpty(value)) return "";
+        if (Strings.isNullOrEmpty(value) || maxSize <= 0) {
+            return value;
+        }
 
         if (value.getBytes("utf-8").length <= maxSize) {
             return value;
         }
         throw new Exception("String size over max size. string:" + value + ", max size:" + maxSize);
+    }
+
+    public static String toJsonString(Object obj) {
+        return JSON.toJSONString(obj);
     }
 
     public static String remove(String target, String[] replacement) {

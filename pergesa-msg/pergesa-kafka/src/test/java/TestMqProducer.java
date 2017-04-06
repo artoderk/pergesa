@@ -57,7 +57,7 @@ public class TestMqProducer extends DefaultTestCase {
 
         long start = System.currentTimeMillis();
         try {
-            for (int i = 1; i< 10000; i++) {
+            for (int i = 1; i<= 10000; i++) {
                 bean.setId(i);
                 producer.send(bean);
             }

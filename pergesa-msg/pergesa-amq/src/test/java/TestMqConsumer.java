@@ -13,7 +13,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class TestMqConsumer /*extends DefaultTestCase*/ {
 
     public void testConsumer() {
-        AmqConsumerConfig config = new AmqConsumerConfig("q-test");
+        AmqConsumerConfig config = new AmqConsumerConfig("q-test-low");
         config.setListener(new MqListener<TestMessageBean>() {
             @Override
             public void onMessage(MessageRecord<TestMessageBean> record) {
@@ -26,7 +26,7 @@ public class TestMqConsumer /*extends DefaultTestCase*/ {
             }
         });
         config.setPriority(MessagePriorityEnum.LOW.getCode());
-        config.setBatchSize(10);
+        config.setBatchSize(5);
         MqConsumer consumer = MqClient.buildConsumer(config);
     }
 

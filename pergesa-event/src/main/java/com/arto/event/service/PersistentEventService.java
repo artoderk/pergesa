@@ -14,6 +14,7 @@ package com.arto.event.service;
 
 import com.arto.event.bootstrap.Event;
 import com.arto.event.exception.EventException;
+import com.arto.event.serialization.Serializer;
 import com.arto.event.storage.EventInfo;
 
 /**
@@ -25,10 +26,11 @@ public interface PersistentEventService {
      * 持久化Event
      *
      * @param event
+     * @param serializer
      * @param type
      * @throws EventException
      */
-    public void persist(Event event, String type) throws EventException;
+    public void persist(Event event, Serializer serializer, String type) throws EventException;
 
     /**
      * 对持久化Event加锁(JDBC时有效)

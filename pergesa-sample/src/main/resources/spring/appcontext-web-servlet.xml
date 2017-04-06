@@ -43,11 +43,19 @@
                    maxRetries="${maxRetries}"  />
 
     <!-- 持久化事件恢复Job，如不需要使用持久化功能可以不配 -->
-    <job:bean id="persistentEventRecoveryJob" class="com.arto.event.recovery.PersistentEventRecoveryJob" regCenter="regCenter"
+    <job:bean id="persistentEventRecoveryJob" class="com.arto.event.schedule.PersistentEventRecoveryJob" regCenter="regCenter"
               shardingTotalCount="10"
               cron="0 0/10 * * * ? *"
               failover="true"
               description="Persistent event recovery job" />
+
+    <!-- 持久化事件清理Job，默认清理修改时期30天以前的数据，如不需要使用持久化功能可以不配 -->
+    <job:bean id="persistentEventClearJob" class="com.arto.event.schedule.PersistentEventClearJob" regCenter="regCenter"
+              shardingTotalCount="1"
+              cron="0 10 3 * * ?"
+              shardingItemParameters="0=30"
+              failover="true"
+              description="Persistent event clear job" />
 
     <import resource="classpath:pergesa-event.xml"/>
     <import resource="appcontext-service-db.xml" />

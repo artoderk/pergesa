@@ -12,6 +12,7 @@
  */
 package com.arto.kafka.producer.binding;
 
+import com.alibaba.fastjson.serializer.PropertyFilter;
 import com.arto.core.bootstrap.MqClient;
 import com.arto.core.common.DataPipeline;
 import com.arto.core.common.MessageRecord;
@@ -21,10 +22,13 @@ import com.arto.core.exception.MqClientException;
 import com.arto.core.intercepter.TxMessageContextHolder;
 import com.arto.core.producer.MqProducer;
 import com.arto.event.bootstrap.EventBusFactory;
+import com.arto.event.serialization.JsonSerializer;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
+import com.arto.event.util.StringUtil;
 import com.arto.kafka.common.Constants;
 import com.arto.kafka.common.KafkaMessageRecord;
+import com.arto.kafka.config.KafkaConfigManager;
 import com.arto.kafka.event.KafkaProduceEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,6 +51,12 @@ public class KafkaProducerBinding implements MqProducer {
     /** 持久化事件服务 */
     private final PersistentEventService service;
 
+    /** 消息最大Size*/
+    private final int maxSize;
+
+    /** 序列化类 */
+    private final JsonSerializer serializer;
+
     static {
         // 注册事务消息发送线程
         new Thread(new KafkaTxMessageSendThread(), "KafkaTxMessageSendThread").start();
@@ -56,6 +66,10 @@ public class KafkaProducerBinding implements MqProducer {
         this.config = config;
         // 暂时依赖Spring获取
         this.service = SpringContextHolder.getBean("persistentEventService");
+        // 默认1M
+        maxSize = KafkaConfigManager.getInt("kafka.message.maxsize", 1048576);
+        // 持久化时序列化实现
+        serializer = new JsonSerializer(new KafkaProduceEventPropertyFilter(), -1);
     }
 
     /**
@@ -108,21 +122,27 @@ public class KafkaProducerBinding implements MqProducer {
             throw new MqClientException("Message can't be null or blank");
         }
 
-        // 转换为事件
-        KafkaProduceEvent event = buildEvent(record, isTransaction);
-        if (event.isPersistent()) {
-            // 持久化消息直接持久化(模拟客户端两阶段提交)
-            service.persist(event, Constants.KAFKA_EVENT_BEAN);
-            // 加入线程上下文，等待事务正常结束后加入发送Queue处理(避免定时调度的延迟，调度默认10分钟执行一次)
-            TxMessageContextHolder.setTxMessage(event);
-        } else {
-            // 非持久化消息直接发送
-            EventBusFactory.getInstance().post(event);
+        try {
+            // 检查消息大小
+            StringUtil.checkSize(record, maxSize);
+            // 转换为事件
+            KafkaProduceEvent event = buildEvent(record, isTransaction);
+            if (event.isPersistent()) {
+                // 持久化消息直接持久化(模拟客户端两阶段提交)
+                service.persist(event, serializer, Constants.KAFKA_EVENT_BEAN);
+                // 加入线程上下文，等待事务正常结束后加入发送Queue处理(避免定时调度的延迟，调度默认10分钟执行一次)
+                TxMessageContextHolder.setTxMessage(event);
+            } else {
+                // 非持久化消息直接发送
+                EventBusFactory.getInstance().post(event);
+            }
+        } catch (Throwable t) {
+            throw new MqClientException("Send message failed. message:" + record, t);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private KafkaProduceEvent buildEvent(MessageRecord record, boolean isTransaction){
+    private KafkaProduceEvent buildEvent(MessageRecord record, boolean isTransaction) throws Exception {
         KafkaProduceEvent event = new KafkaProduceEvent();
         // 业务流水号
         event.setBusinessId(record.getBusinessId());
@@ -183,6 +203,20 @@ public class KafkaProducerBinding implements MqProducer {
                     log.warn("Send message failed.", t);
                 }
             }
+        }
+    }
+
+    /** 持久化消息存储时调用 */
+    private static class KafkaProduceEventPropertyFilter implements PropertyFilter {
+
+        @Override
+        public boolean apply(Object object, String name, Object value) {
+            if(name.equalsIgnoreCase("partition")){
+                if ((Integer)value == -1) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

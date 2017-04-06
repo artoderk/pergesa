@@ -153,9 +153,9 @@ public class AmqMessageConsumer {
         // 高优先级QUEUE或TOPIC类消息确保一个Session只有一个消费者，TOPIC永远AutoACK
         if (config.getPriority() == MessagePriorityEnum.HIGH.getCode() || isPubSubDomain) {
             SpringThreadPoolUtil.getNewPool(beanName
-                    , AmqConfigManager.getInt("amq.producer.pool.coreSize", 1)
-                    , AmqConfigManager.getInt("amq.producer.pool.maxSize", 1)
-                    , AmqConfigManager.getInt("amq.producer.pool.queueCapacity", 10)
+                    , 1
+                    , 1
+                    , 10
                     , null);
             builder.addPropertyValue("concurrentConsumers", 1);
             if (!isPubSubDomain) {
@@ -166,9 +166,9 @@ public class AmqMessageConsumer {
             // 中低优先级QUEUE消息批量消费批量确认
             int coreSize = (int)Math.ceil(config.getNumThreads() * 1.3);
             SpringThreadPoolUtil.getNewPool(beanName
-                    , AmqConfigManager.getInt("amq.producer.pool.coreSize", config.getNumThreads())
-                    , AmqConfigManager.getInt("amq.producer.pool.maxSize", (int)Math.ceil(coreSize * 1.5))
-                    , AmqConfigManager.getInt("amq.producer.pool.queueCapacity", 999)
+                    , config.getNumThreads()
+                    , (int)Math.ceil(coreSize * 1.5)
+                    , 999
                     , null);
             builder.addPropertyValue("concurrentConsumers", config.getNumThreads());
             builder.addPropertyValue("SessionAcknowledgeMode", Session.AUTO_ACKNOWLEDGE);

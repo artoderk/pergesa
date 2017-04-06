@@ -26,7 +26,7 @@ import lombok.ToString;
 public class MqEvent extends Event {
 
     /** 消息中件间类型 */
-    private String type;
+    private transient String type;
 
     /** 目的地 */
     private String destination;

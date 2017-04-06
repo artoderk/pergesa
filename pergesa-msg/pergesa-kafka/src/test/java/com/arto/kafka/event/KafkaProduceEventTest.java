@@ -1,6 +1,7 @@
 package com.arto.kafka.event;
 
 import com.arto.core.common.MessageRecord;
+import com.arto.event.serialization.JsonSerializer;
 import com.arto.event.service.PersistentEventService;
 import com.arto.kafka.common.Constants;
 import common.DefaultTestCase;
@@ -27,7 +28,7 @@ public class KafkaProduceEventTest extends DefaultTestCase{
         event.setBusinessType("businessType");
         event.setPersistent(true);
         event.setPayload(record);
-        persistentEventService.persist(event, Constants.KAFKA_EVENT_BEAN);
+        persistentEventService.persist(event, new JsonSerializer(), Constants.KAFKA_EVENT_BEAN);
     }
 
 }

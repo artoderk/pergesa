@@ -60,10 +60,15 @@ public class AmqSpringRegister {
             builder.addPropertyValue("userName", userName);
             builder.addPropertyValue("password", password);
         }
+        if (AmqConfigManager.getBoolean("activemq.useAsyncSend", false)) {
+            builder.addPropertyValue("useAsyncSend", true);
+        }
         // 优化ACK提交，仅在ack=auto时有效
-        builder.addPropertyValue("optimizeAcknowledge",  AmqConfigManager.getBoolean("activemq.optimizeAcknowledge", true));
-        builder.addPropertyValue("optimizeAcknowledgeTimeOut", AmqConfigManager.getInt("activemq.optimizedAckScheduledAckInterval", 10000));
-        builder.addPropertyValue("optimizedAckScheduledAckInterval", AmqConfigManager.getInt("activemq.optimizedAckScheduledAckInterval", 0));
+        if (AmqConfigManager.getBoolean("activemq.optimizeAcknowledge", false)) {
+            builder.addPropertyValue("optimizeAcknowledge", true);
+            builder.addPropertyValue("optimizeAcknowledgeTimeOut", AmqConfigManager.getInt("activemq.optimizeAcknowledgeTimeOut", 10000));
+            builder.addPropertyValue("optimizedAckScheduledAckInterval", AmqConfigManager.getInt("activemq.optimizedAckScheduledAckInterval", 0));
+        }
         registry.registerBeanDefinition("amqConnectionFactory", builder.getRawBeanDefinition());
 
         /** 注册PooledConnectionFactory */

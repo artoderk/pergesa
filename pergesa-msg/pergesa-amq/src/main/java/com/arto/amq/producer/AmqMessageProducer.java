@@ -49,9 +49,6 @@ public class AmqMessageProducer {
     /** 消息发送线程池 */
     private volatile ExecutorService executor;
 
-    /** activemq发送的消息最大容量，默认10M */
-    private int messageMaxSize = AmqConfigManager.getInt("activemq.message.maxSize", 10485760);
-
     /**
      * 发送消息
      *
@@ -94,7 +91,7 @@ public class AmqMessageProducer {
 
     private void doSend(final Destination destination, final AmqProduceEvent event){
         try {
-            final String message = StringUtil.checkSize(event.getPayload(), messageMaxSize);
+            final String message = StringUtil.checkSize(event.getPayload(), -1);
 
             int priority = AmqUtil.convert2AmqPriority(event.getPriority());
             if (destination != null) {

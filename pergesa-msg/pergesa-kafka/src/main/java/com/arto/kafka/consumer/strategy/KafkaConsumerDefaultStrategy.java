@@ -20,6 +20,7 @@ import com.arto.core.consumer.strategy.AbstractConsumerStrategy;
 import com.arto.core.exception.MqClientException;
 import com.arto.event.bootstrap.Event;
 import com.arto.event.common.Destroyable;
+import com.arto.event.serialization.JsonSerializer;
 import com.arto.event.service.PersistentEventService;
 import com.arto.event.util.SpringContextHolder;
 import com.arto.event.util.SpringDestroyableUtil;
@@ -49,10 +50,14 @@ class KafkaConsumerDefaultStrategy extends AbstractConsumerStrategy implements K
     /** 消息拉取线程关闭Flag */
     private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 
+    /** 序列化类 */
+    private final JsonSerializer serializer;
+
     KafkaConsumerDefaultStrategy(){
         this.service = SpringContextHolder.getBean("persistentEventService");
         // 注册勾子
         SpringDestroyableUtil.add("kafkaConsumerDefaultStrategy", this);
+        serializer = new JsonSerializer();
     }
 
     @Override
@@ -66,7 +71,7 @@ class KafkaConsumerDefaultStrategy extends AbstractConsumerStrategy implements K
     @Override
     public void destroy() {
         closeFlag.set(true);
-        log.info("Destroy KafkaConsumerDefaultStrategy successful.");
+        log.info("Destroy kafkaConsumerDefaultStrategy successful.");
     }
 
     @SuppressWarnings("unchecked")
@@ -115,7 +120,7 @@ class KafkaConsumerDefaultStrategy extends AbstractConsumerStrategy implements K
         // 无限重试直到持久化成功
         while (!closeFlag.get()){
             try {
-                service.persist(event, Constants.K_CONSUME_EVENT_BEAN);
+                service.persist(event, serializer, Constants.K_CONSUME_EVENT_BEAN);
                 failed = false;
                 break;
             } catch (Throwable e) {

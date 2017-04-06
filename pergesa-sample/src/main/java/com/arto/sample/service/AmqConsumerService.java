@@ -4,7 +4,6 @@ import com.arto.core.annotation.Consumer;
 import com.arto.core.common.MessagePriorityEnum;
 import com.arto.core.common.MessageRecord;
 import com.arto.core.common.MqTypeEnum;
-import com.arto.core.exception.MqClientException;
 import com.arto.sample.dao.OrderDao;
 import com.arto.sample.domain.OrderDO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,7 @@ public class AmqConsumerService {
     @Consumer(type = MqTypeEnum.ACTIVEMQ, destination = "q-test", priority = MessagePriorityEnum.HIGH, checkRedeliver = "checkRedeliver")
     public void consumerHigh(MessageRecord<OrderDO> message){
         System.out.println("ConsumerService.consumerHigh message:" + message);
-        throw new MqClientException("test exception.");
+        //throw new MqClientException("test exception.");
     }
 
     @Consumer(type = MqTypeEnum.ACTIVEMQ, destination = "q-test-medium", priority = MessagePriorityEnum.MEDIUM)
