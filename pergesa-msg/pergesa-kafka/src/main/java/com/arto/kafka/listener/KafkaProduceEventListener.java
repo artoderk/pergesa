@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * 消息发送事件
- * TODO 需考虑切换消息中件间后持久化消息的处理
  *
  * Created by xiong.j on 2017/1/6.
  */

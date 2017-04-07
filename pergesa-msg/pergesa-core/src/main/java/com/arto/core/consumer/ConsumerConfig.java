@@ -24,7 +24,7 @@ import java.lang.reflect.Method;
  */
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class ConsumerConfig extends MqConfig{
 
     /** 消息类型反序列化类 */

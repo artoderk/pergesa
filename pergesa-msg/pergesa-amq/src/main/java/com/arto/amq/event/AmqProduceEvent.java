@@ -11,7 +11,7 @@ import lombok.ToString;
  */
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class AmqProduceEvent extends MqEvent {
 
     /** 是否持久化 */

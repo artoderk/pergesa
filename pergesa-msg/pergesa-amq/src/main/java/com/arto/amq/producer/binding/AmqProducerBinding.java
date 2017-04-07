@@ -140,7 +140,7 @@ public class AmqProducerBinding implements MqProducer {
         BeanDefinitionRegistry registry = (BeanDefinitionRegistry) SpringContextHolder.getBeanFactory();
         BeanDefinitionBuilder builder;
         String destName = AmqUtil.getDestName(destination);
-        if (destName.startsWith("T") || destName.startsWith("t")) {
+        if (AmqUtil.isPubSubDomain(destName)) {
             // 以"T"或"t"开头为TOPIC
             builder = BeanDefinitionBuilder.genericBeanDefinition(ActiveMQTopic.class);
         } else {

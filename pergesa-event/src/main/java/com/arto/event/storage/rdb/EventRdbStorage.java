@@ -158,7 +158,7 @@ public class EventRdbStorage implements EventStorage {
 		builder.append(EVENT_SQL + " WHERE ");
 		builder.append(" SYSTEM_ID = :systemId");
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
-		builder.append(" AND STATUS = " + EventStatusEnum.WAIT.getCode());
+		builder.append(" AND STATUS = ").append(EventStatusEnum.WAIT.getCode());
 		builder.append(" AND GMT_MODIFIED < :delaySecond");
 		builder.append(" UNION ALL ");
 		// 重试过1次以上的数据，按照重试时间取
@@ -166,7 +166,7 @@ public class EventRdbStorage implements EventStorage {
 		builder.append(" SYSTEM_ID = :systemId" );
 		builder.append(" AND TAG IN (").append(StringUtil.join(tags, ",")).append(")");
 		builder.append(" AND GMT_MODIFIED > :maxRecoveryDate");
-		builder.append(" AND STATUS = " + EventStatusEnum.PROCESSING.getCode());
+		builder.append(" AND STATUS = ").append(EventStatusEnum.PROCESSING.getCode());
 		builder.append(" AND NEXT_RETRY_TIME < :currentDate");
 		builder.append(" ) es LIMIT :limit");
 

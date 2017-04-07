@@ -112,7 +112,7 @@ public class PersistentEventServiceImpl implements PersistentEventService {
      */
     @Override
     public void fail(EventInfo eventInfo){
-        // TODO 如果没有启用事务消息(2PC)， 失败消息直接发后管
+        // TODO 如果没有启用事务消息(2PC)， 失败消息直接发后管?
         if (eventInfo.getDefaultRetriedCount() == -1) {
             // 无限重试时继续重试
             retry(eventInfo);

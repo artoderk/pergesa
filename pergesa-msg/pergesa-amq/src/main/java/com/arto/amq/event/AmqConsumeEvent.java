@@ -22,7 +22,7 @@ import lombok.ToString;
  */
 @Setter
 @Getter
-@ToString
+@ToString(callSuper = true)
 public class AmqConsumeEvent extends MqEvent{
 
     private String messageId;
